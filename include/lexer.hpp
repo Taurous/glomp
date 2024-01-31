@@ -3,9 +3,8 @@
 #include <vector>
 #include <string>
 #include <optional>
-#include <iostream>
 
-enum class TokenType {
+enum TokenType {
     _INT, // integer
     _ADD, // addition
     _SUB, // subtract
@@ -14,7 +13,10 @@ enum class TokenType {
     _STR, // string
     _OUT, // output
     _DMP, // dump stack
-    _INV  // invalid
+    _INV, // invalid
+    _EOF, // end of file
+
+    _COUNT
 };
 
 struct Token {

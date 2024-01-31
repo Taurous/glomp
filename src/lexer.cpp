@@ -1,7 +1,9 @@
 #include "lexer.hpp"
 
+#include <iostream>
 #include <sstream>
 #include <array>
+#include <cassert>
 
 std::vector<Token> tokenize(std::string src) {
     if (src.empty()) {
@@ -12,6 +14,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
+    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -105,10 +108,13 @@ std::vector<Token> tokenize(std::string src) {
         }
     }
 
+    toks.push_back(Token{TokenType::_EOF, line_number});
+
     return toks;
 }
 
 void printTokens(const std::vector<Token> &toks) {
+    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         std::string token_name;
         switch (t.type) {
@@ -138,6 +144,9 @@ void printTokens(const std::vector<Token> &toks) {
                 break;
             case TokenType::_IDN:
                 token_name = "IDN";
+                break;
+            case TokenType::_EOF:
+                token_name = "EOF";
                 break;
             default:
                 std::cerr << "unreachable - printTokens()" << std::endl;

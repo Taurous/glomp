@@ -7,6 +7,7 @@
 #include <optional>
 #include <sstream>
 #include <cctype>
+#include <cassert>
 
 #include "lexer.hpp"
 
@@ -61,8 +62,11 @@ void dumpStack(const std::vector<int> &st) {
 }
 
 void interpret(const std::vector<Token> tokens) {
+    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in interpret()");
     std::vector<int> st;
-    for (const auto &token : tokens) {
+    size_t pc = 0;
+    while (pc < tokens.size()) {
+        const Token &token = tokens[pc++];
         int a, b;
         std::string str;
         switch (token.type) {
@@ -106,6 +110,8 @@ void interpret(const std::vector<Token> tokens) {
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";
                 dumpStack(st);
+            break;
+            case TokenType::_EOF:
             break;
             case TokenType::_INV:
             default:
