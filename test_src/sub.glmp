@@ -1,2 +1,1 @@
-96 27 - out "\n" out
-4.5 2.5 - out "\n" out
+96 27 - ret
