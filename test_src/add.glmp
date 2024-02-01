@@ -1,2 +1,4 @@
 34 35 + out "\n" out
 1.5 3.5 + out "\n" out
+
+"Hello, " "World!\n" dump + dump out
