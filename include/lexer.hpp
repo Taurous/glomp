@@ -5,14 +5,22 @@
 #include <optional>
 
 enum TokenType {
+    // Data Types
     _INT, // integer
+    _STR, // string
+    _IDN, // identifier
+
+    // Operations
     _ADD, // addition
     _SUB, // subtract
-    _RET, // return
-    _IDN, // identifier
-    _STR, // string
+
+    // Keywords
+    _RET, // returns
     _OUT, // output
     _DMP, // dump stack
+    _DUP, // duplicate
+
+    // Other
     _INV, // invalid
     _EOF, // end of file
 
@@ -22,7 +30,7 @@ enum TokenType {
 struct Token {
     TokenType type;
     int line_number;
-    std::optional<std::string> value;
+    std::string value;
 };
 
 std::vector<Token> tokenize(std::string str);

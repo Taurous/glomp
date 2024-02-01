@@ -14,7 +14,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
-    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -28,10 +28,10 @@ std::vector<Token> tokenize(std::string src) {
 
         // _ADD +
         else if (src[i] == '+')
-            toks.push_back(Token{TokenType::_ADD, line_number});
+            toks.push_back(Token{TokenType::_ADD, line_number, "+"});
 
         else if (src[i] == '-')
-            toks.push_back(Token{TokenType::_SUB, line_number});
+            toks.push_back(Token{TokenType::_SUB, line_number, "-"});
 
         // digit encountered
         // TODO: Figure out floats
@@ -97,24 +97,21 @@ std::vector<Token> tokenize(std::string src) {
             }
             --i;
             // check for keywords
-            if (ident == "ret")
-                toks.push_back(Token{TokenType::_RET, line_number});
-            else if (ident == "out")
-                toks.push_back(Token{TokenType::_OUT, line_number});
-            else if (ident == "dump")
-                toks.push_back(Token{TokenType::_DMP, line_number});
-            else
-                toks.push_back(Token{TokenType::_IDN, line_number, ident});
+            if (ident == "ret")         toks.push_back(Token{TokenType::_RET, line_number, ident});
+            else if (ident == "out")    toks.push_back(Token{TokenType::_OUT, line_number, ident});
+            else if (ident == "dump")   toks.push_back(Token{TokenType::_DMP, line_number, ident});
+            else if (ident == "dup")    toks.push_back(Token{TokenType::_DUP, line_number, ident});
+            else                        toks.push_back(Token{TokenType::_IDN, line_number, ident});
         }
     }
 
-    toks.push_back(Token{TokenType::_EOF, line_number});
+    toks.push_back(Token{TokenType::_EOF, line_number, "EOF"});
 
     return toks;
 }
 
 void printTokens(const std::vector<Token> &toks) {
-    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in printTokens()");
+    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         std::string token_name;
         switch (t.type) {
@@ -142,6 +139,9 @@ void printTokens(const std::vector<Token> &toks) {
             case TokenType::_DMP:
                 token_name = "DMP";
                 break;
+            case TokenType::_DUP:
+                token_name = "DUP";
+                break;
             case TokenType::_IDN:
                 token_name = "IDN";
                 break;
@@ -154,21 +154,18 @@ void printTokens(const std::vector<Token> &toks) {
                 break;
         }
 
-        std::cout << t.line_number << "    " << token_name;
-        if (t.value) {
-            std::stringstream ss;
-            for (auto &c : t.value.value()) {
-                switch (c) {
-                    case '\\': ss << "\\\\"; break;
-                    case '\'': ss << "\\'"; break;
-                    case '\"': ss << "\\\""; break;
-                    case '\n': ss << "\\n"; break;
-                    case '\t': ss << "\\t"; break;
-                    default: ss << c; break;
-                }
+        // Escape String (move into own function)
+        std::stringstream ss;
+        for (auto &c : t.value) {
+            switch (c) {
+                case '\\': ss << "\\\\"; break;
+                case '\'': ss << "\\'"; break;
+                case '\"': ss << "\\\""; break;
+                case '\n': ss << "\\n"; break;
+                case '\t': ss << "\\t"; break;
+                default: ss << c; break;
             }
-            std::cout << " - value: " << ss.str();
         }
-        std::cout << "\n";
+        std::cout << t.line_number << "    " << token_name << " - value: " << ss.str() << "\n";
     }
 }

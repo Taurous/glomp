@@ -62,7 +62,7 @@ void dumpStack(const std::vector<int> &st) {
 }
 
 void interpret(const std::vector<Token> tokens) {
-    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in interpret()");
     std::vector<int> st;
     size_t pc = 0;
     while (pc < tokens.size()) {
@@ -71,7 +71,7 @@ void interpret(const std::vector<Token> tokens) {
         std::string str;
         switch (token.type) {
             case TokenType::_INT:
-                st.push_back(std::stoi(token.value.value()));
+                st.push_back(std::stoi(token.value));
             break;
             case TokenType::_ADD:
                 a = pop(st);
@@ -93,11 +93,10 @@ void interpret(const std::vector<Token> tokens) {
             break;
             case TokenType::_STR:
             // put characters onto stack in reverse and then put size of string
-                str = std::string { token.value.value() };
-                for (int i = str.size() - 1; i >= 0; --i) {
-                    st.push_back(int(str[i]));
+                for (int i = token.value.size() - 1; i >= 0; --i) {
+                    st.push_back(int(token.value[i]));
                 }
-                st.push_back(int(str.size()));
+                st.push_back(int(token.value.size()));
             break;
             case TokenType::_OUT:
                 a = pop(st);
@@ -110,6 +109,12 @@ void interpret(const std::vector<Token> tokens) {
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";
                 dumpStack(st);
+            break;
+            case TokenType::_DUP:
+                // a b c -> a b c c
+                a = pop(st);
+                st.push_back(a);
+                st.push_back(a);
             break;
             case TokenType::_EOF:
             break;
