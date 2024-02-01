@@ -68,38 +68,25 @@ void dumpStack(const std::vector<data> &st) {
     }
 }
 
-template <typename T, N>
+template <typename T>
 data add(data d1, data d2) {
-    return data{ std::get<T>(d1) + std::get<N>(d2) };
+    return data{ std::get<T>(d1) + std::get<T>(d2) };
 }
 
 template <typename T>
-data add<std::string, T>(data d1, data d2) {
-    return data{ std::get<std::string>(d1) + std::visit(make_string_functor(), d2) };
-}
-
-template <typename T>
-data add<T, std::string>(data d1, data d2) {
-    std::stringstream ss;
-    ss << std::visit(make_string_functor(), d1);
-    ss << std::get<std::string>(d2);
-    return ss.str();
-}
-
-template <typename T, N>
 data sub(data d1, data d2) {
-    return data{ std::get<T>(d1) - std::get<N>(d2) };
+    return data{ std::get<T>(d1) - std::get<T>(d2) };
 }
 
-template <typename T, N>
+template <typename T>
 data mul(data d1, data d2) {
-    return data{ std::get<T>(d1) * std::get<N>(d2) };
+    return data{ std::get<T>(d1) * std::get<T>(d2) };
 }
 
-template <typename T, N>
+template <typename T>
 data div(data d1, data d2) {
     if (std::get<T>(d2) == 0) { std::cerr << "Divide by zero!\n"; exit(EXIT_FAILURE); }
-    return data{ std::get<T>(d1) / std::get<N>(d2) };
+    return data{ std::get<T>(d1) / std::get<T>(d2) };
 }
 
 void interpret(const std::vector<Token> tokens) {
@@ -121,8 +108,8 @@ void interpret(const std::vector<Token> tokens) {
                 prog_stack.push_back(std::get<std::string>(token.value));
             break;
             case TokenType::_ADD:
-                b = pop(prog_stack);
                 a = pop(prog_stack);
+                b = pop(prog_stack);
                 switch (a.index()) {
                     case 1:
                         a = add<int>(a, b);
@@ -155,8 +142,8 @@ void interpret(const std::vector<Token> tokens) {
                 prog_stack.push_back(a);
             break;
             case TokenType::_MUL:
-                b = pop(prog_stack);
                 a = pop(prog_stack);
+                b = pop(prog_stack);
                 switch (a.index()) {
                     case 1:
                         a = mul<int>(a, b);
