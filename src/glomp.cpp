@@ -45,71 +45,147 @@ enum class Mode {
     INTERPRET
 };
 
-inline int pop(std::vector<int> &s) {
+inline data pop(std::vector<data> &s) {
     if (s.empty()) {
         std::cerr << "Runtime Error: stack underflow!" << std::endl;
         exit(EXIT_FAILURE);
     }
-    int a = s.back();
+    data a = s.back();
     s.pop_back();
     return a;
 }
 
-void dumpStack(const std::vector<int> &st) {
+struct make_string_functor {
+    std::string operator()(const std::string &s) const { return s; }
+    std::string operator()(int x) const { return std::to_string(x); }
+    std::string operator()(float x) const { return std::to_string(x); }
+    std::string operator()(const std::monostate &s) const { return ""; }
+};
+
+void dumpStack(const std::vector<data> &st) {
     for (int i = st.size()-1; i >= 0; --i) {
-        std::cout << "[" << i << "] " << st[i] << "\n";
+        std::cout << "[" << i << "] " << escapeString(std::visit(make_string_functor(), st[i])) << "\n";
     }
 }
 
+template <typename T>
+data add(data d1, data d2) {
+    return data{ std::get<T>(d1) + std::get<T>(d2) };
+}
+
+template <typename T>
+data sub(data d1, data d2) {
+    return data{ std::get<T>(d1) - std::get<T>(d2) };
+}
+
+template <typename T>
+data mul(data d1, data d2) {
+    return data{ std::get<T>(d1) * std::get<T>(d2) };
+}
+
+template <typename T>
+data div(data d1, data d2) {
+    if (std::get<T>(d2) == 0) { std::cerr << "Divide by zero!\n"; exit(EXIT_FAILURE); }
+    return data{ std::get<T>(d1) / std::get<T>(d2) };
+}
+
 void interpret(const std::vector<Token> tokens) {
-    assert((TokenType::_COUNT == 10) && "Exhaustive handling of tokens in interpret()");
-    std::vector<int> st;
+    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in interpret()");
+    std::vector<data> prog_stack;
     size_t pc = 0;
     while (pc < tokens.size()) {
         const Token &token = tokens[pc++];
-        int a, b;
+        data a, b;
         std::string str;
         switch (token.type) {
             case TokenType::_INT:
-                st.push_back(std::stoi(token.value.value()));
+                prog_stack.push_back(std::get<int>(token.value));
             break;
-            case TokenType::_ADD:
-                a = pop(st);
-                b = pop(st);
-                st.push_back(a + b);
-            break;
-            case TokenType::_SUB:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(a - b);
-            break;
-            case TokenType::_RET:
-            // need to figure out how this works.
-                a = pop(st);
-                std::cout << "Returned " << a << std::endl;
-            break;
-            case TokenType::_IDN:
-            // this is going to be complicated.
+            case TokenType::_FLT:
+                prog_stack.push_back(std::get<float>(token.value));
             break;
             case TokenType::_STR:
-            // put characters onto stack in reverse and then put size of string
-                str = std::string { token.value.value() };
-                for (int i = str.size() - 1; i >= 0; --i) {
-                    st.push_back(int(str[i]));
+                prog_stack.push_back(std::get<std::string>(token.value));
+            break;
+            case TokenType::_ADD:
+                a = pop(prog_stack);
+                b = pop(prog_stack);
+                switch (a.index()) {
+                    case 1:
+                        a = add<int>(a, b);
+                    break;
+                    case 2:
+                        a = add<float>(a, b);
+                    break;
+                    case 3:
+                        a = add<std::string>(a, b);
+                    break;
+                    default:
+                    break;
                 }
-                st.push_back(int(str.size()));
+                prog_stack.push_back(a);
+            break;
+            case TokenType::_SUB:
+                b = pop(prog_stack);
+                a = pop(prog_stack);
+                switch (a.index()) {
+                    case 1:
+                        a = sub<int>(a, b);
+                    break;
+                    case 2:
+                        a = sub<float>(a, b);
+                    break;
+                    default:
+                        std::cout << "whoops\n";
+                    break;
+                }
+                prog_stack.push_back(a);
+            break;
+            case TokenType::_MUL:
+                a = pop(prog_stack);
+                b = pop(prog_stack);
+                switch (a.index()) {
+                    case 1:
+                        a = mul<int>(a, b);
+                    break;
+                    case 2:
+                        a = mul<float>(a, b);
+                    break;
+                    default:
+                    break;
+                }
+                prog_stack.push_back(a);
+            break;
+            case TokenType::_DIV:
+                b = pop(prog_stack);
+                a = pop(prog_stack);
+                switch (a.index()) {
+                    case 1:
+                        a = div<int>(a, b);
+                    break;
+                    case 2:
+                        a = div<float>(a, b);
+                    break;
+                    default:
+                    break;
+                }
+                prog_stack.push_back(a);
+            break;
+            case TokenType::_RET:
+                a = pop(prog_stack);
+                try { std::cout << "Returned " << std::get<int>(a) << "\n"; }
+                catch (const std::exception &e) { std::cerr << "non integer value returned: " << e.what() << "\n"; }
             break;
             case TokenType::_OUT:
-                a = pop(st);
-                str = "";
-                for (int i = 0; i < a; ++i) {
-                    str += char(pop(st));
-                }
-                std::cout << str;
+                a = pop(prog_stack);
+                std::cout << std::visit(make_string_functor(), a);
             break;
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";
-                dumpStack(st);
+                dumpStack(prog_stack);
+            break;
+            case TokenType::_IDN:
+            // this is going to be complicated.
             break;
             case TokenType::_EOF:
             break;
