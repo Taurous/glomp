@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::vector<Token> tokens = tokenize(getSource(argv[2]));
+    std::vector<Token> tokens = tokenize(getSource(argv[argc-1]));
     if (dump)  printTokens(tokens);
     
     if (!validate(tokens)) {
