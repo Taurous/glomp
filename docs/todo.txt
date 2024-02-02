@@ -1,9 +1,0 @@
-Add tokens:
-
-comments $
-dup2 a b c -> a b c b c
-rot  a b c -> b c a -> c a b - > a b c
-swap a b c -> a c b
-
-mul
-di

@@ -1,0 +1,4 @@
+$ this is a comment!
+$ "This should not print\n" out
+"This file has comments!\n" out $ This is a comment after an expression
+$ This is a comment before the EOF

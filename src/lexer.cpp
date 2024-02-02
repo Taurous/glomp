@@ -21,6 +21,16 @@ std::vector<Token> tokenize(std::string src) {
             ++line_number;
             continue;
         }
+        
+        // comment - $
+        else if (src[i] == '$') {
+            while (src[i] != '\n') {
+                ++i;
+                if (i >= src.size()) break; 
+            }
+            --i;
+            continue;
+        }
 
         // skip whitespace
         else if (src[i] == ' ' || src[i] == '\t')
