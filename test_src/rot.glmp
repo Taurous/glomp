@@ -1,1 +1,1 @@
-1 2 3 dump rot dump rot dump rot ret
+1 2 3 rot dup ret rot dup ret rot dup ret

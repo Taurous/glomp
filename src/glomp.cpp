@@ -15,6 +15,7 @@ void usage() {
     std::cout << "Usage: glomp [option] <input.glmp>" << std::endl;
     std::cout << "    -i    interpret program" << std::endl;
     std::cout << "    -c    compile program" << std::endl;
+    std::cout << "    -d    dump tokens to stdout" << std::endl;
 }
 
 std::string getSource(std::string path) {
@@ -167,17 +168,22 @@ int main(int argc, char **argv) {
         usage();
         exit(EXIT_FAILURE);
     }
-
+    
+    bool dump = false;
     Mode mode;
-    if (std::string(argv[1]) == "-i") mode = Mode::INTERPRET;
-    else if (std::string(argv[1]) == "-c") mode = Mode::COMPILE;
-    else {
-        std::cerr << "invalid option: " << argv[1] << std::endl;
-        exit(EXIT_FAILURE);
+    for (int i = 1; i < argc-1; ++i) {
+        std::string option = argv[i];
+        if (option == "-i") mode = Mode::INTERPRET;
+        else if (option == "-c") mode = Mode::COMPILE;
+        else if (option == "-d") dump = true;
+        else {
+            std::cerr << "invalid option: " << option << std::endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
     std::vector<Token> tokens = tokenize(getSource(argv[2]));
-    printTokens(tokens);
+    if (dump)  printTokens(tokens);
     
     if (!validate(tokens)) {
         std::cerr << "Failed" << std::endl;
