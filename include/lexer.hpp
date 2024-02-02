@@ -13,7 +13,9 @@ enum TokenType {
     // Operations
     _ADD, // addition
     _SUB, // subtract
-
+    _MUL, // multiply
+    _DIV, // divide
+    
     // Keywords
     _RET, // returns
     _OUT, // output

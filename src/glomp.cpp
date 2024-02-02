@@ -62,7 +62,7 @@ void dumpStack(const std::vector<int> &st) {
 }
 
 void interpret(const std::vector<Token> tokens) {
-    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in interpret()");
     std::vector<int> st;
     size_t pc = 0;
     while (pc < tokens.size()) {
@@ -74,14 +74,25 @@ void interpret(const std::vector<Token> tokens) {
                 st.push_back(std::stoi(token.value));
             break;
             case TokenType::_ADD:
-                a = pop(st);
                 b = pop(st);
+                a = pop(st);
                 st.push_back(a + b);
             break;
             case TokenType::_SUB:
                 b = pop(st);
                 a = pop(st);
                 st.push_back(a - b);
+            break;
+            case TokenType::_MUL:
+                b = pop(st);
+                a = pop(st);
+                st.push_back(a * b);
+            break;
+            case TokenType::_DIV:
+                b = pop(st);
+                a = pop(st);
+                if (b == 0) { std::cerr << "Divide by zero! Line number " << token.line_number << std::endl; exit(EXIT_FAILURE); }
+                st.push_back(a / b);
             break;
             case TokenType::_RET:
             // need to figure out how this works.

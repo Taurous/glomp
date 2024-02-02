@@ -14,7 +14,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
-    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -26,12 +26,11 @@ std::vector<Token> tokenize(std::string src) {
         else if (src[i] == ' ' || src[i] == '\t')
             continue;
 
-        // _ADD +
-        else if (src[i] == '+')
-            toks.push_back(Token{TokenType::_ADD, line_number, "+"});
-
-        else if (src[i] == '-')
-            toks.push_back(Token{TokenType::_SUB, line_number, "-"});
+        // Math
+        else if (src[i] == '+') toks.push_back(Token{TokenType::_ADD, line_number, "+"});
+        else if (src[i] == '-') toks.push_back(Token{TokenType::_SUB, line_number, "-"});
+        else if (src[i] == '*') toks.push_back(Token{TokenType::_MUL, line_number, "*"});
+        else if (src[i] == '/') toks.push_back(Token{TokenType::_DIV, line_number, "/"});
 
         // digit encountered
         // TODO: Figure out floats
@@ -111,43 +110,23 @@ std::vector<Token> tokenize(std::string src) {
 }
 
 void printTokens(const std::vector<Token> &toks) {
-    assert((TokenType::_COUNT == 11) && "Exhaustive handling of tokens in printTokens()");
+    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         std::string token_name;
         switch (t.type) {
-            case TokenType::_INT:
-                token_name = "INT";
-                break;
-            case TokenType::_ADD:
-                token_name = "ADD";
-                break;
-            case TokenType::_SUB:
-                token_name = "SUB";
-                break;
-            case TokenType::_RET:
-                token_name = "RET";
-                break;
-            case TokenType::_STR:
-                token_name = "STR";
-                break;
-            case TokenType::_OUT:
-                token_name = "OUT";
-                break;
-            case TokenType::_INV:
-                token_name = "INV";
-                break;
-            case TokenType::_DMP:
-                token_name = "DMP";
-                break;
-            case TokenType::_DUP:
-                token_name = "DUP";
-                break;
-            case TokenType::_IDN:
-                token_name = "IDN";
-                break;
-            case TokenType::_EOF:
-                token_name = "EOF";
-                break;
+            case TokenType::_INT: token_name = "INT"; break;
+            case TokenType::_STR: token_name = "STR"; break;
+            case TokenType::_IDN: token_name = "IDN"; break;
+            case TokenType::_ADD: token_name = "ADD"; break;
+            case TokenType::_SUB: token_name = "SUB"; break;
+            case TokenType::_MUL: token_name = "MUL"; break;
+            case TokenType::_DIV: token_name = "DIV"; break;
+            case TokenType::_RET: token_name = "RET"; break;
+            case TokenType::_OUT: token_name = "OUT"; break;
+            case TokenType::_INV: token_name = "INV"; break;
+            case TokenType::_DMP: token_name = "DMP"; break;
+            case TokenType::_DUP: token_name = "DUP"; break;
+            case TokenType::_EOF: token_name = "EOF"; break;
             default:
                 std::cerr << "unreachable - printTokens()" << std::endl;
                 exit(EXIT_FAILURE);
