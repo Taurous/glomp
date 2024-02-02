@@ -14,7 +14,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
-    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -100,6 +100,9 @@ std::vector<Token> tokenize(std::string src) {
             else if (ident == "out")    toks.push_back(Token{TokenType::_OUT, line_number, ident});
             else if (ident == "dump")   toks.push_back(Token{TokenType::_DMP, line_number, ident});
             else if (ident == "dup")    toks.push_back(Token{TokenType::_DUP, line_number, ident});
+            else if (ident == "dup2")   toks.push_back(Token{TokenType::_DUP2, line_number, ident});
+            else if (ident == "rot")    toks.push_back(Token{TokenType::_ROT, line_number, ident});
+            else if (ident == "swap")   toks.push_back(Token{TokenType::_SWP, line_number, ident});
             else                        toks.push_back(Token{TokenType::_IDN, line_number, ident});
         }
     }
@@ -110,7 +113,7 @@ std::vector<Token> tokenize(std::string src) {
 }
 
 void printTokens(const std::vector<Token> &toks) {
-    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in printTokens()");
+    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         std::string token_name;
         switch (t.type) {
@@ -123,6 +126,9 @@ void printTokens(const std::vector<Token> &toks) {
             case TokenType::_DIV: token_name = "DIV"; break;
             case TokenType::_RET: token_name = "RET"; break;
             case TokenType::_OUT: token_name = "OUT"; break;
+            case TokenType::_DUP2: token_name = "DUP2"; break;
+            case TokenType::_ROT: token_name = "ROT"; break;
+            case TokenType::_SWP: token_name = "SWP"; break;
             case TokenType::_INV: token_name = "INV"; break;
             case TokenType::_DMP: token_name = "DMP"; break;
             case TokenType::_DUP: token_name = "DUP"; break;

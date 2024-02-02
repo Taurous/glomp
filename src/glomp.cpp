@@ -62,12 +62,12 @@ void dumpStack(const std::vector<int> &st) {
 }
 
 void interpret(const std::vector<Token> tokens) {
-    assert((TokenType::_COUNT == 13) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
     std::vector<int> st;
     size_t pc = 0;
     while (pc < tokens.size()) {
         const Token &token = tokens[pc++];
-        int a, b;
+        int a, b, c;
         std::string str;
         switch (token.type) {
             case TokenType::_INT:
@@ -125,6 +125,28 @@ void interpret(const std::vector<Token> tokens) {
                 // a b c -> a b c c
                 a = pop(st);
                 st.push_back(a);
+                st.push_back(a);
+            break;
+            case TokenType::_DUP2:
+                b = pop(st);
+                a = pop(st);
+                st.push_back(a);
+                st.push_back(b);
+                st.push_back(a);
+                st.push_back(b);
+            break;
+            case TokenType::_ROT:
+                c = pop(st);
+                b = pop(st);
+                a = pop(st);
+                st.push_back(b);
+                st.push_back(c);
+                st.push_back(a);
+            break;
+            case TokenType::_SWP:
+                b = pop(st);
+                a = pop(st);
+                st.push_back(b);
                 st.push_back(a);
             break;
             case TokenType::_EOF:

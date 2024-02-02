@@ -21,6 +21,9 @@ enum TokenType {
     _OUT, // output
     _DMP, // dump stack
     _DUP, // duplicate
+    _DUP2, // duplicate x2
+    _ROT, // rotate
+    _SWP, // swap
 
     // Other
     _INV, // invalid
