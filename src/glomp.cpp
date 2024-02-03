@@ -11,11 +11,16 @@
 
 #include "lexer.hpp"
 
+void writeline(std::ofstream &ofs, std::string str) {
+    ofs << str << "\n";
+}
+
 void usage() {
     std::cout << "Usage: glomp [option] <input.glmp>" << std::endl;
     std::cout << "    -i    interpret program" << std::endl;
     std::cout << "    -c    compile program" << std::endl;
     std::cout << "    -d    dump tokens to stdout" << std::endl;
+    std::cout << "    -o    <output_path>" << std::endl;
 }
 
 std::string getSource(std::string path) {
@@ -42,6 +47,7 @@ bool validate(const std::vector<Token>& tokens) {
 }
 
 enum class Mode {
+    ERROR,
     COMPILE,
     INTERPRET
 };
@@ -160,7 +166,75 @@ void interpret(const std::vector<Token> tokens) {
     }
 }
 
-void compile(const std::vector<Token> tokens) {
+void compile(const std::vector<Token> tokens, std::string out_path) {  
+    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
+
+    std::ofstream out_file(out_path, std::ofstream::trunc | std::ofstream::out);
+
+    if (!out_file.is_open()) {
+        std::cerr << "unable to create file: " << out_path << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    writeline(out_file, "segment .text");
+    out_file << "\n";
+    // `out` subroutine - prints uint64_t to stdout
+    writeline(out_file, "out:");
+    writeline(out_file, "    sub     rsp, 40");
+    writeline(out_file, "    mov     ecx, 30");
+    writeline(out_file, "    mov     r9, -3689348814741910323");
+    writeline(out_file, "    mov     BYTE [rsp+31], 10");
+    writeline(out_file, ".L2:");
+    writeline(out_file, "    mov     rax, rdi");
+    writeline(out_file, "    mov     r8, rcx");
+    writeline(out_file, "    sub     rcx, 1");
+    writeline(out_file, "    mul     r9");
+    writeline(out_file, "    mov     rax, rdi");
+    writeline(out_file, "    shr     rdx, 3");
+    writeline(out_file, "    lea     rsi, [rdx+rdx*4]");
+    writeline(out_file, "    add     rsi, rsi");
+    writeline(out_file, "    sub     rax, rsi");
+    writeline(out_file, "    add     eax, 48");
+    writeline(out_file, "    mov     BYTE [rsp+1+rcx], al");
+    writeline(out_file, "    mov     rax, rdi");
+    writeline(out_file, "    mov     rdi, rdx");
+    writeline(out_file, "    cmp     rax, 9");
+    writeline(out_file, "    ja      .L2");
+    writeline(out_file, "    mov     edx, 32");
+    writeline(out_file, "    lea     rsi, [rsp+r8]");
+    writeline(out_file, "    mov     edi, 1");
+    writeline(out_file, "    sub     rdx, rcx");
+    writeline(out_file, "    mov     rax, 1");
+    writeline(out_file, "    syscall");
+    writeline(out_file, "    add     rsp, 40");
+    writeline(out_file, "    ret");
+    out_file << "\n";
+    writeline(out_file, "global _start");
+    writeline(out_file, "_start:");
+
+    for (auto &t : tokens) {
+        switch (t.type) {
+        case TokenType::_INT:
+            writeline(out_file, "    push   " + t.value);
+        break;
+        case TokenType::_ADD:
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    add    rax, rbx");
+            writeline(out_file, "    push   rax");
+        break;
+        case TokenType::_OUT:
+            writeline(out_file, "    pop    rdi");
+            writeline(out_file, "    call   out");
+        break;
+        default:
+            std::cerr << "Token not implemented yet...\n";
+        break;
+        }
+    }
+
+    writeline(out_file, "    mov    rax, 60");
+    writeline(out_file, "    mov    rdi, 0");
+    writeline(out_file, "    syscall");
 }
 
 int main(int argc, char **argv) {
@@ -169,21 +243,31 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     
+    std::string out_file = "glmp.out";
     bool dump = false;
-    Mode mode;
+    Mode mode = Mode::ERROR;
     for (int i = 1; i < argc-1; ++i) {
         std::string option = argv[i];
-        if (option == "-i") mode = Mode::INTERPRET;
-        else if (option == "-c") mode = Mode::COMPILE;
+        if (option == "-i") { if (mode != Mode::ERROR) { std::cerr << "error: -i and -c are mutually exclusive" << std::endl; } else mode = Mode::INTERPRET; }
+        else if (option == "-c") { if (mode != Mode::ERROR) { std::cerr << "error: -i and -c are mutually exclusive" << std::endl; } else mode = Mode::COMPILE; }
         else if (option == "-d") dump = true;
+        else if (option == "-o") {
+            if (i + 1 >= argc - 1) { std::cerr << "error: -o" << std::endl; exit(EXIT_FAILURE); }
+            out_file = argv[++i];
+        }
         else {
             std::cerr << "invalid option: " << option << std::endl;
             exit(EXIT_FAILURE);
         }
     }
+    
+    if (mode == Mode::ERROR) {
+        std::cerr << "error: -i or -c are required" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     std::vector<Token> tokens = tokenize(getSource(argv[argc-1]));
-    if (dump)  printTokens(tokens);
+    if (dump) printTokens(tokens);
     
     if (!validate(tokens)) {
         std::cerr << "Failed" << std::endl;
@@ -195,7 +279,7 @@ int main(int argc, char **argv) {
             interpret(tokens);
             break;
         case Mode::COMPILE:
-            compile(tokens);
+            compile(tokens, out_file);
             break;
         default:
             std::cerr << "unreachable - mode" << std::endl;
