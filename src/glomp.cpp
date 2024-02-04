@@ -184,7 +184,6 @@ int call_nasm_ld(std::string out_path) {
     std::string ldcmd = "ld " + objfile + " -o " + out_path;
     std::string rmcmd = "rm " + objfile + " " + asmfile;
     std::string cmd = nasmcmd + " && " + ldcmd + " && " + rmcmd;
-    std::cout << "cmd = " << cmd << std::endl;
 
     int pid;
     int status;
@@ -199,15 +198,15 @@ int call_nasm_ld(std::string out_path) {
 }
 
 void compile(const std::vector<Token> tokens, std::string out_path) {  
-    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
         std::cerr << "unable to create file: " << out_path << std::endl;
         exit(EXIT_FAILURE);
     }
-    writeline(out_file, "segment .text");
-    out_file << "\n";
+    writeline(out_file, "BITS 64\n");
+    writeline(out_file, "segment .text\n");
     // `out` subroutine - prints uint64_t to stdout
     writeline(out_file, "out:");
     writeline(out_file, "    sub     rsp, 40");
@@ -238,8 +237,7 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
     writeline(out_file, "    syscall");
     writeline(out_file, "    add     rsp, 40");
     writeline(out_file, "    ret");
-    out_file << "\n";
-    writeline(out_file, "global _start");
+    writeline(out_file, "\nglobal _start");
     writeline(out_file, "_start:");
 
     for (auto &t : tokens) {
@@ -248,11 +246,29 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
             writeline(out_file, "    push   " + t.value);
         break;
         case TokenType::_ADD:
-            writeline(out_file, "    pop    rax");
             writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rax");
             writeline(out_file, "    add    rax, rbx");
             writeline(out_file, "    push   rax");
         break;
+        case TokenType::_SUB:
+            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    sub    rax, rbx");
+            writeline(out_file, "    push   rax");
+        break;
+        case TokenType::_MUL:
+            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    mul    rbx");
+            writeline(out_file, "    push   rax");
+        break;
+        case TokenType::_DIV:
+            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    div    rbx");
+            writeline(out_file, "    push   rax");
+        break; 
         case TokenType::_OUT:
             writeline(out_file, "    pop    rdi");
             writeline(out_file, "    call   out");
