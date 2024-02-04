@@ -1,1 +1,1 @@
-69 420 dup ret swap ret
+69 420 dup out swap out

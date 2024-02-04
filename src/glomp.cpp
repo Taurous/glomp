@@ -8,6 +8,11 @@
 #include <sstream>
 #include <cctype>
 #include <cassert>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <algorithm>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include "lexer.hpp"
 
@@ -37,6 +42,7 @@ std::string getSource(std::string path) {
     return buffer.str();
 }
 
+//TODO: This function is way too simple
 bool validate(const std::vector<Token>& tokens) {
     if (std::find_if(tokens.begin(), tokens.end(), [](const Token &t){ return t.type == TokenType::_INV; }) != tokens.end()) {
         std::cout << "Invalid Token" << std::endl;
@@ -70,8 +76,10 @@ void dumpStack(const std::vector<int> &st) {
 
 void interpret(const std::vector<Token> tokens) {
     assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
-    std::vector<int> st;
-    size_t pc = 0;
+    
+    std::vector<int> st;        // Program Stack
+    size_t pc = 0;              // Stack Pointer
+    
     while (pc < tokens.size()) {
         const Token &token = tokens[pc++];
         int a, b, c;
@@ -101,29 +109,27 @@ void interpret(const std::vector<Token> tokens) {
                 if (b == 0) { std::cerr << "Divide by zero! Line number " << token.line_number << std::endl; exit(EXIT_FAILURE); }
                 st.push_back(a / b);
             break;
-            case TokenType::_RET:
+            /*case TokenType::_RET:
             // need to figure out how this works.
                 a = pop(st);
                 std::cout << "Returned " << a << std::endl;
-            break;
+            break;*/
             case TokenType::_IDN:
-            // this is going to be complicated.
+                assert(true && "_IDN Not yet implemented...\n");
             break;
             case TokenType::_STR:
-            // put characters onto stack in reverse and then put size of string
+                assert(true && "_STR Not yet implemented...\n");
+            /*// put characters onto stack in reverse and then put size of string
                 for (int i = token.value.size() - 1; i >= 0; --i) {
                     st.push_back(int(token.value[i]));
                 }
                 st.push_back(int(token.value.size()));
-            break;
+            */break;
             case TokenType::_OUT:
                 a = pop(st);
-                str = "";
-                for (int i = 0; i < a; ++i) {
-                    str += char(pop(st));
-                }
-                std::cout << str;
+                std::cout << a << '\n';
             break;
+            // Is dump implementable in assembly or will it destroy the stack?
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";
                 dumpStack(st);
@@ -156,7 +162,11 @@ void interpret(const std::vector<Token> tokens) {
                 st.push_back(b);
                 st.push_back(a);
             break;
+            case TokenType::_DROP:
+                (void)pop(st);
+            break;
             case TokenType::_EOF:
+                // return a value?
             break;
             case TokenType::_INV:
             default:
@@ -166,10 +176,31 @@ void interpret(const std::vector<Token> tokens) {
     }
 }
 
+int call_nasm_ld(std::string out_path) {
+    std::string asmfile = out_path + ".asm";
+    std::string objfile = out_path + ".o";
+    
+    std::string nasmcmd = "nasm -felf64 " + asmfile + " -o " + objfile;
+    std::string ldcmd = "ld " + objfile + " -o " + out_path;
+    std::string rmcmd = "rm " + objfile + " " + asmfile;
+    std::string cmd = nasmcmd + " && " + ldcmd + " && " + rmcmd;
+    std::cout << "cmd = " << cmd << std::endl;
+
+    int pid;
+    int status;
+
+    if ((pid = fork())) {
+        //parent, wait
+        waitpid(pid, &status, 0);
+    } else {
+        execl("/bin/bash", "bash", "-c", cmd.c_str(), (char*)NULL);
+    }
+    return status;
+}
+
 void compile(const std::vector<Token> tokens, std::string out_path) {  
     assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
-
-    std::ofstream out_file(out_path, std::ofstream::trunc | std::ofstream::out);
+    std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
         std::cerr << "unable to create file: " << out_path << std::endl;
@@ -199,7 +230,7 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
     writeline(out_file, "    mov     rdi, rdx");
     writeline(out_file, "    cmp     rax, 9");
     writeline(out_file, "    ja      .L2");
-    writeline(out_file, "    mov     edx, 32");
+    writeline(out_file, "    mov     edx, 31");
     writeline(out_file, "    lea     rsi, [rsp+r8]");
     writeline(out_file, "    mov     edi, 1");
     writeline(out_file, "    sub     rdx, rcx");
@@ -226,15 +257,20 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
             writeline(out_file, "    pop    rdi");
             writeline(out_file, "    call   out");
         break;
+        case TokenType::_EOF:
+            writeline(out_file, "    mov    rax, 60");
+            writeline(out_file, "    pop    rdi");
+            writeline(out_file, "    syscall");
+        break;
         default:
             std::cerr << "Token not implemented yet...\n";
         break;
         }
     }
 
-    writeline(out_file, "    mov    rax, 60");
-    writeline(out_file, "    mov    rdi, 0");
-    writeline(out_file, "    syscall");
+    out_file.close();
+
+    call_nasm_ld(out_path);
 }
 
 int main(int argc, char **argv) {
@@ -244,29 +280,41 @@ int main(int argc, char **argv) {
     }
     
     std::string out_file = "glmp.out";
+    std::string in_file;
     bool dump = false;
     Mode mode = Mode::ERROR;
-    for (int i = 1; i < argc-1; ++i) {
+    for (int i = 1; i < argc; ++i) {
         std::string option = argv[i];
-        if (option == "-i") { if (mode != Mode::ERROR) { std::cerr << "error: -i and -c are mutually exclusive" << std::endl; } else mode = Mode::INTERPRET; }
-        else if (option == "-c") { if (mode != Mode::ERROR) { std::cerr << "error: -i and -c are mutually exclusive" << std::endl; } else mode = Mode::COMPILE; }
+        if (option == "-i") {
+            if (mode != Mode::ERROR) {
+                std::cerr << "notice: -i and -c are mutually exclusive" << std::endl;
+            } else mode = Mode::INTERPRET;
+        }
+        else if (option == "-c") {
+            if (mode != Mode::ERROR) {
+                std::cerr << "notice: -i and -c are mutually exclusive" << std::endl;
+            } else mode = Mode::COMPILE;
+        }
         else if (option == "-d") dump = true;
         else if (option == "-o") {
-            if (i + 1 >= argc - 1) { std::cerr << "error: -o" << std::endl; exit(EXIT_FAILURE); }
+            if (i + 1 >= argc) { std::cerr << "error: -o must be followed by output path" << std::endl; exit(EXIT_FAILURE); }
             out_file = argv[++i];
         }
-        else {
-            std::cerr << "invalid option: " << option << std::endl;
-            exit(EXIT_FAILURE);
-        }
+        else in_file = argv[i];
     }
-    
-    if (mode == Mode::ERROR) {
+
+    if (in_file.empty()) {
+        std::cerr << "error: did not provide input file" << std::endl;
+        usage();
+        exit(EXIT_FAILURE);
+    }
+    else if (mode == Mode::ERROR) {
         std::cerr << "error: -i or -c are required" << std::endl;
+        usage();
         exit(EXIT_FAILURE);
     }
 
-    std::vector<Token> tokens = tokenize(getSource(argv[argc-1]));
+    std::vector<Token> tokens = tokenize(getSource(in_file));
     if (dump) printTokens(tokens);
     
     if (!validate(tokens)) {

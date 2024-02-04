@@ -17,13 +17,14 @@ enum TokenType {
     _DIV, // divide
     
     // Keywords
-    _RET, // returns
-    _OUT, // output
+//  _RET, // returns
+    _OUT, // output integer to stdout
     _DMP, // dump stack
     _DUP, // duplicate
     _DUP2, // duplicate x2
     _ROT, // rotate
     _SWP, // swap
+    _DROP,// remove item from stack
 
     // Other
     _INV, // invalid
@@ -33,9 +34,10 @@ enum TokenType {
 };
 
 struct Token {
-    TokenType type;
+    TokenType type = TokenType::_INV;
     int line_number;
     std::string value;
+    std::string type_as_string;
 };
 
 std::vector<Token> tokenize(std::string str);

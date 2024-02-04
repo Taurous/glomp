@@ -1,1 +1,1 @@
-2 2 dump - dump "test\n" dump out ret
+2 2 dump - dump out

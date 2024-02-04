@@ -1,1 +1,1 @@
-5 dup + ret
+5 dup + out

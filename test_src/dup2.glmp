@@ -1,1 +1,1 @@
-400 20 dump dup2 dump + ret + ret
+400 20 dump dup2 dump + out + out

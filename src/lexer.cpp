@@ -5,6 +5,36 @@
 #include <array>
 #include <cassert>
 
+Token makeToken(TokenType type, int line_number, std::string value) {
+    Token t;
+    t.type = type;
+    t.line_number = line_number;
+    t.value = value;
+    switch (t.type) {
+        case TokenType::_INT: t.type_as_string = "INT"; break;
+        case TokenType::_STR: t.type_as_string = "STR"; break;
+        case TokenType::_IDN: t.type_as_string = "IDN"; break;
+        case TokenType::_ADD: t.type_as_string = "ADD"; break;
+        case TokenType::_SUB: t.type_as_string = "SUB"; break;
+        case TokenType::_MUL: t.type_as_string = "MUL"; break;
+        case TokenType::_DIV: t.type_as_string = "DIV"; break;
+       // case TokenType::_RET: t.type_as_string = "RET"; break;
+        case TokenType::_OUT: t.type_as_string = "OUT"; break;
+        case TokenType::_DUP2: t.type_as_string = "DUP2"; break;
+        case TokenType::_ROT: t.type_as_string = "ROT"; break;
+        case TokenType::_SWP: t.type_as_string = "SWP"; break;
+        case TokenType::_INV: t.type_as_string = "INV"; break;
+        case TokenType::_DMP: t.type_as_string = "DMP"; break;
+        case TokenType::_DUP: t.type_as_string = "DUP"; break;
+        case TokenType::_EOF: t.type_as_string = "EOF"; break;
+        default:
+            std::cerr << "Exhaustive handling of tokens in makeToken()" << std::endl;
+            exit(EXIT_FAILURE);
+        break;
+    }
+    return t;
+}
+
 std::vector<Token> tokenize(std::string src) {
     if (src.empty()) {
         std::cerr << "empty file..." << std::endl;
@@ -23,35 +53,34 @@ std::vector<Token> tokenize(std::string src) {
         }
         
         // comment - $
-        else if (src[i] == '$') {
+        if (src[i] == '$') {
             while (src[i] != '\n') {
                 ++i;
                 if (i >= src.size()) break; 
             }
-            --i;
+            --i; // dec counter so newlines are not skipped
             continue;
         }
 
         // skip whitespace
-        else if (src[i] == ' ' || src[i] == '\t')
-            continue;
+        if (src[i] == ' ' || src[i] == '\t') continue;
 
         // Math
-        else if (src[i] == '+') toks.push_back(Token{TokenType::_ADD, line_number, "+"});
-        else if (src[i] == '-') toks.push_back(Token{TokenType::_SUB, line_number, "-"});
-        else if (src[i] == '*') toks.push_back(Token{TokenType::_MUL, line_number, "*"});
-        else if (src[i] == '/') toks.push_back(Token{TokenType::_DIV, line_number, "/"});
+             if (src[i] == '+') toks.push_back(makeToken(TokenType::_ADD, line_number, "+"));
+        else if (src[i] == '-') toks.push_back(makeToken(TokenType::_SUB, line_number, "-"));
+        else if (src[i] == '*') toks.push_back(makeToken(TokenType::_MUL, line_number, "*"));
+        else if (src[i] == '/') toks.push_back(makeToken(TokenType::_DIV, line_number, "/"));
 
         // digit encountered
         // TODO: Figure out floats
         else if (std::isdigit(src[i])) {
-            std::string ident;
+            std::string value;
             bool invalid = false;
             while (true) {
                 // white space encountered, end token
-                if (src[i] == ' ' || src[i] == '\n') { --i; break; }
+                if (src[i] == ' ' || src[i] == '\n' || src[i] == '\t') { --i; break; }
                 else {
-                    ident += src[i];
+                    value += src[i];
                     // if not a digit, token is invalid
                     if (!std::isdigit(src[i])) invalid = true;
                     ++i;
@@ -62,9 +91,9 @@ std::vector<Token> tokenize(std::string src) {
             }
 
             if (invalid)
-                toks.push_back(Token{TokenType::_INV, line_number, ident});
+                toks.push_back(makeToken(TokenType::_INV, line_number, value));
             else
-                toks.push_back(Token{TokenType::_INT, line_number, ident});
+                toks.push_back(makeToken(TokenType::_INT, line_number, value));
         }
 
         // string
@@ -94,7 +123,7 @@ std::vector<Token> tokenize(std::string src) {
                 }
             }
 
-            toks.push_back(Token{TokenType::_STR, line_number, str});
+            toks.push_back(makeToken(TokenType::_STR, line_number, str));
         }
 
         // identifier
@@ -106,14 +135,15 @@ std::vector<Token> tokenize(std::string src) {
             }
             --i;
             // check for keywords
-            if (ident == "ret")         toks.push_back(Token{TokenType::_RET, line_number, ident});
-            else if (ident == "out")    toks.push_back(Token{TokenType::_OUT, line_number, ident});
-            else if (ident == "dump")   toks.push_back(Token{TokenType::_DMP, line_number, ident});
-            else if (ident == "dup")    toks.push_back(Token{TokenType::_DUP, line_number, ident});
-            else if (ident == "dup2")   toks.push_back(Token{TokenType::_DUP2, line_number, ident});
-            else if (ident == "rot")    toks.push_back(Token{TokenType::_ROT, line_number, ident});
-            else if (ident == "swap")   toks.push_back(Token{TokenType::_SWP, line_number, ident});
-            else                        toks.push_back(Token{TokenType::_IDN, line_number, ident});
+            //if (ident == "ret")         toks.push_back(makeToken(TokenType::_RET, line_number, ident));
+            if (ident == "out")    toks.push_back(makeToken(TokenType::_OUT, line_number, ident));
+            else if (ident == "dump")   toks.push_back(makeToken(TokenType::_DMP, line_number, ident));
+            else if (ident == "dup")    toks.push_back(makeToken(TokenType::_DUP, line_number, ident));
+            else if (ident == "dup2")   toks.push_back(makeToken(TokenType::_DUP2, line_number, ident));
+            else if (ident == "rot")    toks.push_back(makeToken(TokenType::_ROT, line_number, ident));
+            else if (ident == "swap")   toks.push_back(makeToken(TokenType::_SWP, line_number, ident));
+            else if (ident == "dump")   toks.push_back(makeToken(TokenType::_DROP, line_number, ident));
+            else                        toks.push_back(makeToken(TokenType::_IDN, line_number, ident));
         }
     }
 
@@ -125,30 +155,6 @@ std::vector<Token> tokenize(std::string src) {
 void printTokens(const std::vector<Token> &toks) {
     assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
-        std::string token_name;
-        switch (t.type) {
-            case TokenType::_INT: token_name = "INT"; break;
-            case TokenType::_STR: token_name = "STR"; break;
-            case TokenType::_IDN: token_name = "IDN"; break;
-            case TokenType::_ADD: token_name = "ADD"; break;
-            case TokenType::_SUB: token_name = "SUB"; break;
-            case TokenType::_MUL: token_name = "MUL"; break;
-            case TokenType::_DIV: token_name = "DIV"; break;
-            case TokenType::_RET: token_name = "RET"; break;
-            case TokenType::_OUT: token_name = "OUT"; break;
-            case TokenType::_DUP2: token_name = "DUP2"; break;
-            case TokenType::_ROT: token_name = "ROT"; break;
-            case TokenType::_SWP: token_name = "SWP"; break;
-            case TokenType::_INV: token_name = "INV"; break;
-            case TokenType::_DMP: token_name = "DMP"; break;
-            case TokenType::_DUP: token_name = "DUP"; break;
-            case TokenType::_EOF: token_name = "EOF"; break;
-            default:
-                std::cerr << "unreachable - printTokens()" << std::endl;
-                exit(EXIT_FAILURE);
-                break;
-        }
-
         // Escape String (move into own function)
         std::stringstream ss;
         for (auto &c : t.value) {
@@ -161,6 +167,6 @@ void printTokens(const std::vector<Token> &toks) {
                 default: ss << c; break;
             }
         }
-        std::cout << t.line_number << "    " << token_name << " - value: " << ss.str() << "\n";
+        std::cout << t.line_number << "    " << t.type_as_string << " - value: " << ss.str() << "\n";
     }
 }
