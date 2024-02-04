@@ -8,8 +8,10 @@
 #include <sstream>
 #include <cctype>
 #include <cassert>
-#include <unistd.h>
-#include <sys/wait.h>
+extern "C" {
+    #include <unistd.h>
+    #include <sys/wait.h>
+}
 #include <algorithm>
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -58,35 +60,35 @@ enum class Mode {
     INTERPRET
 };
 
-inline int pop(std::vector<int> &s) {
+inline uint64_t pop(std::vector<uint64_t> &s) {
     if (s.empty()) {
         std::cerr << "Runtime Error: stack underflow!" << std::endl;
         exit(EXIT_FAILURE);
     }
-    int a = s.back();
+    uint64_t a = s.back();
     s.pop_back();
     return a;
 }
 
-void dumpStack(const std::vector<int> &st) {
+void dumpStack(const std::vector<uint64_t> &st) {
     for (int i = st.size()-1; i >= 0; --i) {
         std::cout << "[" << i << "] " << st[i] << "\n";
     }
 }
 
-void interpret(const std::vector<Token> tokens) {
-    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in interpret()");
+uint64_t interpret(const std::vector<Token> tokens) {
+    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in interpret()");
     
-    std::vector<int> st;        // Program Stack
-    size_t pc = 0;              // Stack Pointer
-    
+    std::vector<uint64_t> st;       // Program Stack
+    size_t pc = 0;                  // Stack Pointer
+    uint64_t return_val = 0;
+
     while (pc < tokens.size()) {
         const Token &token = tokens[pc++];
-        int a, b, c;
-        std::string str;
+        uint64_t a, b, c;
         switch (token.type) {
             case TokenType::_INT:
-                st.push_back(std::stoi(token.value));
+                st.push_back(std::stoull(token.value));
             break;
             case TokenType::_ADD:
                 b = pop(st);
@@ -109,16 +111,22 @@ void interpret(const std::vector<Token> tokens) {
                 if (b == 0) { std::cerr << "Divide by zero! Line number " << token.line_number << std::endl; exit(EXIT_FAILURE); }
                 st.push_back(a / b);
             break;
+            case TokenType::_MOD:
+                b = pop(st);
+                a = pop(st);
+                if (b == 0) st.push_back(a);
+                else st.push_back(a % b);
+            break;
             /*case TokenType::_RET:
             // need to figure out how this works.
                 a = pop(st);
                 std::cout << "Returned " << a << std::endl;
             break;*/
             case TokenType::_IDN:
-                assert(true && "_IDN Not yet implemented...\n");
+                assert(false && "_IDN Not yet implemented...\n");
             break;
             case TokenType::_STR:
-                assert(true && "_STR Not yet implemented...\n");
+                assert(false && "_STR Not yet implemented...\n");
             /*// put characters onto stack in reverse and then put size of string
                 for (int i = token.value.size() - 1; i >= 0; --i) {
                     st.push_back(int(token.value[i]));
@@ -157,16 +165,17 @@ void interpret(const std::vector<Token> tokens) {
                 st.push_back(a);
             break;
             case TokenType::_SWP:
+                // b a 
                 b = pop(st);
                 a = pop(st);
                 st.push_back(b);
                 st.push_back(a);
             break;
             case TokenType::_DROP:
-                (void)pop(st);
+                pop(st);
             break;
             case TokenType::_EOF:
-                // return a value?
+                return_val = pop(st);
             break;
             case TokenType::_INV:
             default:
@@ -174,6 +183,7 @@ void interpret(const std::vector<Token> tokens) {
             break;
         }
     }
+    return return_val;
 }
 
 int call_nasm_ld(std::string out_path) {
@@ -198,7 +208,7 @@ int call_nasm_ld(std::string out_path) {
 }
 
 void compile(const std::vector<Token> tokens, std::string out_path) {  
-    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in compile()");
+    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
@@ -245,6 +255,12 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
         case TokenType::_INT:
             writeline(out_file, "    push   " + t.value);
         break;
+        case TokenType::_STR:
+            assert(false && "_STR Not yet implemented\n");
+        break;
+        case TokenType::_IDN:
+            assert(false && "_IDN Not yet implemented\n");
+        break;
         case TokenType::_ADD:
             writeline(out_file, "    pop    rbx");
             writeline(out_file, "    pop    rax");
@@ -269,17 +285,43 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
             writeline(out_file, "    div    rbx");
             writeline(out_file, "    push   rax");
         break; 
+        case TokenType::_MOD:
+            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    div    rbx");
+            writeline(out_file, "    push   rdx");
+        break; 
         case TokenType::_OUT:
             writeline(out_file, "    pop    rdi");
             writeline(out_file, "    call   out");
+        break;
+        case TokenType::_DMP:
+            assert(false && "_STR Not yet implemented\n");
+        break;
+        case TokenType::_DUP:
+            assert(false && "_DUP Not yet implemented\n");
+        break;
+        case TokenType::_DUP2:
+            assert(false && "_DUP2 Not yet implemented\n");
+        break;
+        case TokenType::_ROT:
+            assert(false && "_ROT Not yet implemented\n");
+        break;
+        case TokenType::_SWP:
+            assert(false && "_SWP Not yet implemented\n");
+        break;
+        case TokenType::_DROP:
+            assert(false && "_DROP Not yet implemented\n");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");
             writeline(out_file, "    pop    rdi");
             writeline(out_file, "    syscall");
         break;
+        case TokenType::_INV:
         default:
-            std::cerr << "Token not implemented yet...\n";
+            std::cerr << "unreachable - compile()" << std::endl;
+            exit(EXIT_FAILURE);
         break;
         }
     }
@@ -337,10 +379,11 @@ int main(int argc, char **argv) {
         std::cerr << "Failed" << std::endl;
         exit(EXIT_FAILURE);
     }
-
+    
+    int return_val = 0;
     switch (mode) {
         case Mode::INTERPRET:
-            interpret(tokens);
+            return_val = int(interpret(tokens));
             break;
         case Mode::COMPILE:
             compile(tokens, out_file);
@@ -351,5 +394,5 @@ int main(int argc, char **argv) {
             break;
     }
 
-    exit(EXIT_SUCCESS);
+    return return_val;
 }

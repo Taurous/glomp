@@ -18,6 +18,7 @@ Token makeToken(TokenType type, int line_number, std::string value) {
         case TokenType::_SUB: t.type_as_string = "SUB"; break;
         case TokenType::_MUL: t.type_as_string = "MUL"; break;
         case TokenType::_DIV: t.type_as_string = "DIV"; break;
+        case TokenType::_MOD: t.type_as_string = "MOD"; break;
        // case TokenType::_RET: t.type_as_string = "RET"; break;
         case TokenType::_OUT: t.type_as_string = "OUT"; break;
         case TokenType::_DUP2: t.type_as_string = "DUP2"; break;
@@ -26,6 +27,7 @@ Token makeToken(TokenType type, int line_number, std::string value) {
         case TokenType::_INV: t.type_as_string = "INV"; break;
         case TokenType::_DMP: t.type_as_string = "DMP"; break;
         case TokenType::_DUP: t.type_as_string = "DUP"; break;
+        case TokenType::_DROP: t.type_as_string = "DROP"; break;
         case TokenType::_EOF: t.type_as_string = "EOF"; break;
         default:
             std::cerr << "Exhaustive handling of tokens in makeToken()" << std::endl;
@@ -44,7 +46,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
-    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -70,6 +72,7 @@ std::vector<Token> tokenize(std::string src) {
         else if (src[i] == '-') toks.push_back(makeToken(TokenType::_SUB, line_number, "-"));
         else if (src[i] == '*') toks.push_back(makeToken(TokenType::_MUL, line_number, "*"));
         else if (src[i] == '/') toks.push_back(makeToken(TokenType::_DIV, line_number, "/"));
+        else if (src[i] == '%') toks.push_back(makeToken(TokenType::_MOD, line_number, "%"));
 
         // digit encountered
         // TODO: Figure out floats
@@ -142,7 +145,7 @@ std::vector<Token> tokenize(std::string src) {
             else if (ident == "dup2")   toks.push_back(makeToken(TokenType::_DUP2, line_number, ident));
             else if (ident == "rot")    toks.push_back(makeToken(TokenType::_ROT, line_number, ident));
             else if (ident == "swap")   toks.push_back(makeToken(TokenType::_SWP, line_number, ident));
-            else if (ident == "dump")   toks.push_back(makeToken(TokenType::_DROP, line_number, ident));
+            else if (ident == "drop")   toks.push_back(makeToken(TokenType::_DROP, line_number, ident));
             else                        toks.push_back(makeToken(TokenType::_IDN, line_number, ident));
         }
     }
@@ -153,7 +156,7 @@ std::vector<Token> tokenize(std::string src) {
 }
 
 void printTokens(const std::vector<Token> &toks) {
-    assert((TokenType::_COUNT == 16) && "Exhaustive handling of tokens in printTokens()");
+    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         // Escape String (move into own function)
         std::stringstream ss;

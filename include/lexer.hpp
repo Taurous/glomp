@@ -15,7 +15,8 @@ enum TokenType {
     _SUB, // subtract
     _MUL, // multiply
     _DIV, // divide
-    
+    _MOD, // modulus (remainder of division)
+
     // Keywords
 //  _RET, // returns
     _OUT, // output integer to stdout
