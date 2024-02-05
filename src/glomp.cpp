@@ -339,8 +339,9 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
             writeline(out_file, "    push   rcx");
         break;
         case TokenType::_DROP:
-            writeline(out_file, "    pop    rax");
-            writeline(out_file, "    mov    rax, 0");
+            //writeline(out_file, "    pop    rax");
+            //writeline(out_file, "    mov    rax, 0");
+            writeline(out_file, "    add    rsp, 8");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");
