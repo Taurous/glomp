@@ -2,18 +2,19 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <stack>
-#include <iomanip>
-#include <optional>
+//#include <stack>
+//#include <iomanip>
+//#include <optional>
 #include <sstream>
-#include <cctype>
-#include <cassert>
+#include <cctype> // for uint64_t
+#include <cstdio> // For std::remove
+#include <cassert> // for assert
 extern "C" {
-    #include <unistd.h>
-    #include <sys/wait.h>
+    #include <unistd.h> // for execl
+    #include <sys/wait.h> // for waitpid
 }
-#include <algorithm>
-#include <filesystem>
+#include <algorithm> // for std::find_if
+#include <filesystem> // for path
 namespace fs = std::filesystem;
 
 #include "lexer.hpp"
@@ -196,6 +197,8 @@ int call_nasm_ld(std::string out_path) {
     std::string rmcmd = "rm " + objfile + " " + asmfile;
     std::string cmd = nasmcmd + " && " + ldcmd + " && " + rmcmd;
 
+    std::cout << cmd << std::endl;
+
     int pid;
     int status;
 
@@ -250,17 +253,26 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
     writeline(out_file, "    ret");
     writeline(out_file, "\nglobal _start");
     writeline(out_file, "_start:");
-
+    
+    auto quit = [&](std::string msg) {
+        out_file.close();
+        out_path += ".asm";
+        int result = std::remove(out_path.c_str());
+        if (result) std::cerr << "unable to delete: " << out_path << std::endl;
+        std::cerr << msg << std::endl;
+        exit(EXIT_FAILURE);
+    };
+    
     for (auto &t : tokens) {
         switch (t.type) {
         case TokenType::_INT:
             writeline(out_file, "    push   " + t.value);
         break;
         case TokenType::_STR:
-            assert(false && "_STR Not yet implemented\n");
+            quit("_STR NYI");
         break;
         case TokenType::_IDN:
-            assert(false && "_IDN Not yet implemented\n");
+            quit("_IDN NYI");
         break;
         case TokenType::_ADD:
             writeline(out_file, "    pop    rcx");
@@ -298,22 +310,39 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
             writeline(out_file, "    call   out");
         break;
         case TokenType::_DMP:
-            assert(false && "_STR Not yet implemented\n");
+        // Could be a interpreter only function
+            quit("_DMP NYI");
         break;
         case TokenType::_DUP:
-            assert(false && "_DUP Not yet implemented\n");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    push   rax");
+            writeline(out_file, "    push   rax");
         break;
         case TokenType::_DUP2:
-            assert(false && "_DUP2 Not yet implemented\n");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    pop    rcx");
+            writeline(out_file, "    push   rcx");
+            writeline(out_file, "    push   rax");
+            writeline(out_file, "    push   rcx");
+            writeline(out_file, "    push   rax");
         break;
         case TokenType::_ROT:
-            assert(false && "_ROT Not yet implemented\n");
+            writeline(out_file, "    pop    rax"); //3
+            writeline(out_file, "    pop    rcx"); //2
+            writeline(out_file, "    pop    rdx"); //1
+            writeline(out_file, "    push   rcx"); // 2
+            writeline(out_file, "    push   rax");// 1
+            writeline(out_file, "    push   rdx");// 3
         break;
         case TokenType::_SWP:
-            assert(false && "_SWP Not yet implemented\n");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    pop    rcx");
+            writeline(out_file, "    push   rax");
+            writeline(out_file, "    push   rcx");
         break;
         case TokenType::_DROP:
-            assert(false && "_DROP Not yet implemented\n");
+            writeline(out_file, "    pop    rax");
+            writeline(out_file, "    mov    rax, 0");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");

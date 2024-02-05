@@ -3,9 +3,14 @@
 RED='\033[4;92m'
 RESET='\033[0m'
 
-for entry in test_src/*.glmp
+SRCDIR="test/"
+OUTDIR="output/"
+
+$(b=${s##*/}; echo ${b%.*})
+
+for entry in ${SRCDIR}*.glmp
 do
-    echo -e ${RED}$entry${RESET}
-    ./build/glomp -i $entry
-    echo
+    filename=$(b=${entry##*/}; echo ${b%.*})
+    #echo -e ${RED}$entry${RESET}
+    ./build/glomp -c -o $OUTDIR$filename $entry
 done

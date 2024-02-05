@@ -1,6 +1,7 @@
 #!/bin/bash
 
 FILE=$1
-OUTPUT="output/"
+INPUTDIR="test/"
+OUTPUTDIR="output/"
 
-./build/glomp -c -o $OUTPUT$FILE test_src/${FILE}.glmp
+./build/glomp -c -o $OUTPUT$FILE ${INPUTDIR}${FILE}.glmp
