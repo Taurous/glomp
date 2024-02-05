@@ -28,6 +28,7 @@ void usage() {
     std::cout << "    -c    compile program" << std::endl;
     std::cout << "    -d    dump tokens to stdout" << std::endl;
     std::cout << "    -o    <output_path>" << std::endl;
+    std::cout << "    -a    generate asm" << std::endl;
 }
 
 std::string getSource(std::string path) {
@@ -207,7 +208,7 @@ int call_nasm_ld(std::string out_path) {
     return status;
 }
 
-void compile(const std::vector<Token> tokens, std::string out_path) {  
+void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly) {  
     assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
@@ -262,33 +263,34 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
             assert(false && "_IDN Not yet implemented\n");
         break;
         case TokenType::_ADD:
-            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    add    rax, rbx");
+            writeline(out_file, "    add    rax, rcx");
             writeline(out_file, "    push   rax");
         break;
         case TokenType::_SUB:
-            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    sub    rax, rbx");
+            writeline(out_file, "    sub    rax, rcx");
             writeline(out_file, "    push   rax");
         break;
         case TokenType::_MUL:
-            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    mul    rbx");
+            writeline(out_file, "    mul    rcx");
             writeline(out_file, "    push   rax");
         break;
         case TokenType::_DIV:
-            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    div    rbx");
+            writeline(out_file, "    mov    rdx, 0");
+            writeline(out_file, "    div    rcx");
             writeline(out_file, "    push   rax");
         break; 
         case TokenType::_MOD:
-            writeline(out_file, "    pop    rbx");
+            writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    div    rbx");
+            writeline(out_file, "    div    rcx");
             writeline(out_file, "    push   rdx");
         break; 
         case TokenType::_OUT:
@@ -315,7 +317,7 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");
-            writeline(out_file, "    pop    rdi");
+            writeline(out_file, "    pop    di");
             writeline(out_file, "    syscall");
         break;
         case TokenType::_INV:
@@ -328,7 +330,7 @@ void compile(const std::vector<Token> tokens, std::string out_path) {
 
     out_file.close();
 
-    call_nasm_ld(out_path);
+    if (!asmonly) call_nasm_ld(out_path);
 }
 
 int main(int argc, char **argv) {
@@ -340,6 +342,7 @@ int main(int argc, char **argv) {
     std::string out_file = "glmp.out";
     std::string in_file;
     bool dump = false;
+    bool asmonly = false;
     Mode mode = Mode::ERROR;
     for (int i = 1; i < argc; ++i) {
         std::string option = argv[i];
@@ -358,6 +361,7 @@ int main(int argc, char **argv) {
             if (i + 1 >= argc) { std::cerr << "error: -o must be followed by output path" << std::endl; exit(EXIT_FAILURE); }
             out_file = argv[++i];
         }
+        else if (option == "-a") asmonly = true;
         else in_file = argv[i];
     }
 
@@ -386,7 +390,7 @@ int main(int argc, char **argv) {
             return_val = int(interpret(tokens));
             break;
         case Mode::COMPILE:
-            compile(tokens, out_file);
+            compile(tokens, out_file, asmonly);
             break;
         default:
             std::cerr << "unreachable - mode" << std::endl;
