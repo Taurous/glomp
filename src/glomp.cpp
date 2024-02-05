@@ -197,8 +197,6 @@ int call_nasm_ld(std::string out_path) {
     std::string rmcmd = "rm " + objfile + " " + asmfile;
     std::string cmd = nasmcmd + " && " + ldcmd + " && " + rmcmd;
 
-    std::cout << cmd << std::endl;
-
     int pid;
     int status;
 

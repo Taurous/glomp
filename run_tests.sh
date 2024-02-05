@@ -1,16 +1,19 @@
 #!/bin/bash
 
-RED='\033[4;92m'
-RESET='\033[0m'
+SRCDIR="test/src/"
+OUTDIR="test/output/"
+RESULTDIR="test/results/"
 
-SRCDIR="test/"
-OUTDIR="output/"
-
-$(b=${s##*/}; echo ${b%.*})
-
-for entry in ${SRCDIR}*.glmp
+for entry in $OUTDIR*
 do
-    filename=$(b=${entry##*/}; echo ${b%.*})
-    #echo -e ${RED}$entry${RESET}
-    ./build/glomp -c -o $OUTDIR$filename $entry
+    name=$(b=${entry##*/}; echo ${b%.*})
+    #bash -c "./$entry 2>&1 | tee ${RESULTDIR}${file}.txt"
+    diff ${RESULTDIR}${name}.txt ${RESULTDIR}${name}_test.txt &>/dev/null
+    if [ $? -gt 0 ]; then
+        echo Test failed: $name
+        echo expected:
+        echo `cat ${RESULTDIR}${name}_test.txt`
+        echo got:
+        echo `cat ${RESULTDIR}${name}.txt`
+    fi
 done

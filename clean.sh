@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rm -f output/*
+bash -c "rm -f test/output/*"
