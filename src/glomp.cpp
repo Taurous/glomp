@@ -136,7 +136,6 @@ uint64_t interpret(const std::vector<Token> tokens) {
                 a = pop(st);
                 std::cout << a << '\n';
             break;
-            // Is dump implementable in assembly or will it destroy the stack?
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";
                 dumpStack(st);
@@ -247,7 +246,7 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
     writeline(out_file, "    ret");
     
     // printchar 
-    writeline(out_file, "printchar:");
+    writeline(out_file, "\nprintchar:");
     writeline(out_file, "    push    rdi");
     writeline(out_file, "    mov     rax, 1");
     writeline(out_file, "    mov     rdi, 1");
@@ -257,29 +256,32 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
     writeline(out_file, "    pop     rdi");
     writeline(out_file, "    ret");
 
-    // dumpstack
-    writeline(out_file, "dumpstack:");
-    writeline(out_file, "    mov     rcx, r12");
-    writeline(out_file, "    sub     rcx, rsp");
-    writeline(out_file, "    mov     rdx, 8");
-    writeline(out_file, "dloop:");
-    writeline(out_file, "    mov     rdi, [rsp+rdx]");
-    writeline(out_file, "    push    rcx");
-    writeline(out_file, "    push    rdx");
-    writeline(out_file, "    call    out");
-    writeline(out_file, "    pop     rdx");
-    writeline(out_file, "    pop     rcx");
-    writeline(out_file, "    add     rdx, 8");
-    writeline(out_file, "    mov     rax, rcx");
-    writeline(out_file, "    sub     rax, rdx");
-    writeline(out_file, "    jnz     dloop");
-    writeline(out_file, "    ret");
+    // only generate dumpstack if it is called
+    auto is_dump = [](const Token& t) { return t.type == TokenType::_DMP; };
+    if (std::find_if(std::begin(tokens), std::end(tokens), is_dump) != tokens.end()) {
+        writeline(out_file, "\ndumpstack:");
+        writeline(out_file, "    mov     rcx, rbp");
+        writeline(out_file, "    sub     rcx, rsp");
+        writeline(out_file, "    mov     rdx, 8");
+        writeline(out_file, "dloop:");
+        writeline(out_file, "    mov     rdi, [rsp+rdx]");
+        writeline(out_file, "    push    rcx");
+        writeline(out_file, "    push    rdx");
+        writeline(out_file, "    call    out");
+        writeline(out_file, "    pop     rdx");
+        writeline(out_file, "    pop     rcx");
+        writeline(out_file, "    add     rdx, 8");
+        writeline(out_file, "    mov     rax, rcx");
+        writeline(out_file, "    sub     rax, rdx");
+        writeline(out_file, "    jnz     dloop");
+        writeline(out_file, "    ret");
+    }
 
     // entry point
     writeline(out_file, "\nglobal _start");
     writeline(out_file, "_start:");
-    writeline(out_file, "; store pointer of bottom of stack in r12");
-    writeline(out_file, "    mov     r12, rsp");
+    writeline(out_file, "; store pointer of bottom of stack in rbp");
+    writeline(out_file, "    mov     rbp, rsp");
 
     auto quit = [&](std::string msg) {
         out_file.close();
@@ -379,8 +381,7 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
         break;
         case TokenType::_INV:
         default:
-            std::cerr << "unreachable - compile()" << std::endl;
-            exit(EXIT_FAILURE);
+            quit("unreachable - compile()");
         break;
         }
     }
