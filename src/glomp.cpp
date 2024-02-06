@@ -2,9 +2,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-//#include <stack>
-//#include <iomanip>
-//#include <optional>
 #include <sstream>
 #include <cctype> // for uint64_t
 #include <cstdio> // For std::remove
@@ -167,7 +164,6 @@ uint64_t interpret(const std::vector<Token> tokens) {
                 st.push_back(a);
             break;
             case TokenType::_SWP:
-                // b a 
                 b = pop(st);
                 a = pop(st);
                 st.push_back(b);
@@ -249,9 +245,42 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
     writeline(out_file, "    syscall");
     writeline(out_file, "    add     rsp, 40");
     writeline(out_file, "    ret");
+    
+    // printchar 
+    writeline(out_file, "printchar:");
+    writeline(out_file, "    push    rdi");
+    writeline(out_file, "    mov     rax, 1");
+    writeline(out_file, "    mov     rdi, 1");
+    writeline(out_file, "    mov     rsi, rsp");
+    writeline(out_file, "    mov     rdx, 1");
+    writeline(out_file, "    syscall");
+    writeline(out_file, "    pop     rdi");
+    writeline(out_file, "    ret");
+
+    // dumpstack
+    writeline(out_file, "dumpstack:");
+    writeline(out_file, "    mov     rcx, r12");
+    writeline(out_file, "    sub     rcx, rsp");
+    writeline(out_file, "    mov     rdx, 8");
+    writeline(out_file, "dloop:");
+    writeline(out_file, "    mov     rdi, [rsp+rdx]");
+    writeline(out_file, "    push    rcx");
+    writeline(out_file, "    push    rdx");
+    writeline(out_file, "    call    out");
+    writeline(out_file, "    pop     rdx");
+    writeline(out_file, "    pop     rcx");
+    writeline(out_file, "    add     rdx, 8");
+    writeline(out_file, "    mov     rax, rcx");
+    writeline(out_file, "    sub     rax, rdx");
+    writeline(out_file, "    jnz     dloop");
+    writeline(out_file, "    ret");
+
+    // entry point
     writeline(out_file, "\nglobal _start");
     writeline(out_file, "_start:");
-    
+    writeline(out_file, "; store pointer of bottom of stack in r12");
+    writeline(out_file, "    mov     r12, rsp");
+
     auto quit = [&](std::string msg) {
         out_file.close();
         out_path += ".asm";
@@ -264,7 +293,7 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
     for (auto &t : tokens) {
         switch (t.type) {
         case TokenType::_INT:
-            writeline(out_file, "    push   " + t.value);
+            writeline(out_file, "    push    " + t.value);
         break;
         case TokenType::_STR:
             quit("_STR NYI");
@@ -308,8 +337,7 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
             writeline(out_file, "    call   out");
         break;
         case TokenType::_DMP:
-        // Could be a interpreter only function
-            quit("_DMP NYI");
+            writeline(out_file, "    call   dumpstack");
         break;
         case TokenType::_DUP:
             writeline(out_file, "    pop    rax");
@@ -339,13 +367,14 @@ void compile(const std::vector<Token> tokens, std::string out_path, bool asmonly
             writeline(out_file, "    push   rcx");
         break;
         case TokenType::_DROP:
-            //writeline(out_file, "    pop    rax");
+            writeline(out_file, "; drop clobbers rax, consider this in the future");
+            writeline(out_file, "    pop    rax");
             //writeline(out_file, "    mov    rax, 0");
-            writeline(out_file, "    add    rsp, 8");
+            //writeline(out_file, "    add    rsp, 8");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");
-            writeline(out_file, "    pop    di");
+            writeline(out_file, "    pop    rdi");
             writeline(out_file, "    syscall");
         break;
         case TokenType::_INV:
