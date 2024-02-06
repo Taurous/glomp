@@ -21,7 +21,7 @@ void dumpStack(const std::vector<uint64_t> &st) {
 }
 
 int interpret(const std::vector<Token> &tokens) {
-    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 19) && "Exhaustive handling of tokens in interpret()");
     
     std::vector<uint64_t> st;       // Program Stack
     size_t pc = 0;                  // Stack Pointer
@@ -33,6 +33,9 @@ int interpret(const std::vector<Token> &tokens) {
         switch (token.type) {
             case TokenType::_INT:
                 st.push_back(std::stoull(token.value));
+            break;
+            case TokenType::_CHR:
+                st.push_back(uint64_t(token.value[0]));
             break;
             case TokenType::_ADD:
                 b = pop(st);
@@ -79,7 +82,11 @@ int interpret(const std::vector<Token> &tokens) {
             */break;
             case TokenType::_OUT:
                 a = pop(st);
-                std::cout << a << '\n';
+                std::cout << a;
+            break;
+            case TokenType::_PUT:
+                a = pop(st);
+                std::cout << char(a);
             break;
             case TokenType::_DMP:
                 std::cout << "Dumping stack:\n";

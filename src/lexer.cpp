@@ -12,6 +12,7 @@ Token makeToken(TokenType type, int line_number, std::string value) {
     t.value = value;
     switch (t.type) {
         case TokenType::_INT: t.type_as_string = "INT"; break;
+        case TokenType::_CHR: t.type_as_string = "CHR"; break;
         case TokenType::_STR: t.type_as_string = "STR"; break;
         case TokenType::_IDN: t.type_as_string = "IDN"; break;
         case TokenType::_ADD: t.type_as_string = "ADD"; break;
@@ -20,6 +21,7 @@ Token makeToken(TokenType type, int line_number, std::string value) {
         case TokenType::_DIV: t.type_as_string = "DIV"; break;
         case TokenType::_MOD: t.type_as_string = "MOD"; break;
        // case TokenType::_RET: t.type_as_string = "RET"; break;
+        case TokenType::_PUT: t.type_as_string = "PUT"; break;
         case TokenType::_OUT: t.type_as_string = "OUT"; break;
         case TokenType::_DUP2: t.type_as_string = "DUP2"; break;
         case TokenType::_ROT: t.type_as_string = "ROT"; break;
@@ -46,7 +48,7 @@ std::vector<Token> tokenize(std::string src) {
     std::vector<Token> toks;
     int line_number = 0;
 
-    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 19) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -128,6 +130,25 @@ std::vector<Token> tokenize(std::string src) {
 
             toks.push_back(makeToken(TokenType::_STR, line_number, str));
         }
+        
+        // character
+        // TODO: Does not handle escaped characters (though you can just push an int and call put to treat it as char)
+        else if (src[i] == '\'') {
+            if (i+2 >= src.size()) {
+                std::cerr << "Error: Unclosed char at EOF\n";
+                exit(EXIT_FAILURE);
+            }
+            else if (src[i+2] != '\'') {
+                std::cerr << "Error: char definition must be patter 'x' line: " << line_number << "\n";
+                exit(EXIT_FAILURE);
+            }
+            else {
+                std::string chr;
+                chr += src[i+1];
+                toks.push_back(makeToken(TokenType::_CHR, line_number, chr));
+            }
+            i+=3;
+        }
 
         // identifier
         else {
@@ -140,6 +161,7 @@ std::vector<Token> tokenize(std::string src) {
             // check for keywords
             //if (ident == "ret")         toks.push_back(makeToken(TokenType::_RET, line_number, ident));
             if (ident == "out")    toks.push_back(makeToken(TokenType::_OUT, line_number, ident));
+            else if (ident == "put")    toks.push_back(makeToken(TokenType::_PUT, line_number, ident));
             else if (ident == "dump")   toks.push_back(makeToken(TokenType::_DMP, line_number, ident));
             else if (ident == "dup")    toks.push_back(makeToken(TokenType::_DUP, line_number, ident));
             else if (ident == "dup2")   toks.push_back(makeToken(TokenType::_DUP2, line_number, ident));
@@ -156,7 +178,6 @@ std::vector<Token> tokenize(std::string src) {
 }
 
 void printTokens(const std::vector<Token> &toks) {
-    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in printTokens()");
     for (const auto &t : toks) {
         // Escape String (move into own function)
         std::stringstream ss;

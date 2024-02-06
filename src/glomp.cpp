@@ -10,12 +10,13 @@
 #include "compiler.hpp"
 
 void usage() {
-    std::cout << "Usage: glomp [option] <input.glmp>" << std::endl;
-    std::cout << "    -i    interpret program" << std::endl;
-    std::cout << "    -c    compile program" << std::endl;
-    std::cout << "    -d    dump tokens to stdout" << std::endl;
-    std::cout << "    -o    <output_path>" << std::endl;
-    std::cout << "    -a    generate asm" << std::endl;
+    std::cout << "Usage: glomp [option] <input.glmp>\n"
+              << "    -i    interpret program\n"
+              << "    -c    compile program\n"
+              << "    -d    dump tokens to stdout\n"
+              << "    -o    <output_path/filename>\n"
+              << "    -a    generate asm\n"
+              << "          -a is ignored if -i is present\n";
 }
 
 std::string getSource(std::string path) {

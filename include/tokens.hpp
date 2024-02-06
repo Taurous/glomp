@@ -5,6 +5,7 @@
 enum TokenType {
     // Data Types
     _INT, // integer
+    _CHR, // char
     _STR, // string
     _IDN, // identifier
 
@@ -18,6 +19,7 @@ enum TokenType {
     // Keywords
 //  _RET, // returns
     _OUT, // output integer to stdout
+    _PUT, // output char to stdout
     _DMP, // dump stack
     _DUP, // duplicate
     _DUP2, // duplicate x2
