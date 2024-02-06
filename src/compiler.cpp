@@ -38,7 +38,7 @@ int call_nasm_ld(std::string out_path) {
 }
 
 void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonly) {  
-    assert((TokenType::_COUNT == 17) && "Exhaustive handling of tokens in compile()");
+    assert((TokenType::_COUNT == 19) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
@@ -128,6 +128,7 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
     for (auto &t : tokens) {
         switch (t.type) {
         case TokenType::_INT:
+        case TokenType::_CHR:
             writeline(out_file, "    push    " + t.value);
         break;
         case TokenType::_STR:
@@ -170,6 +171,10 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
         case TokenType::_OUT:
             writeline(out_file, "    pop    rdi");
             writeline(out_file, "    call   out");
+        break;
+        case TokenType::_PUT:
+            writeline(out_file, "    pop    rdi");
+            writeline(out_file, "    call   printchar");
         break;
         case TokenType::_DMP:
             writeline(out_file, "    call   dumpstack");

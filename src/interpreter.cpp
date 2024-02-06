@@ -35,7 +35,7 @@ int interpret(const std::vector<Token> &tokens) {
                 st.push_back(std::stoull(token.value));
             break;
             case TokenType::_CHR:
-                st.push_back(uint64_t(token.value[0]));
+                st.push_back(std::stoull(token.value));
             break;
             case TokenType::_ADD:
                 b = pop(st);

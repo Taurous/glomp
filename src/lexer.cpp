@@ -143,9 +143,10 @@ std::vector<Token> tokenize(std::string src) {
                 exit(EXIT_FAILURE);
             }
             else {
-                std::string chr;
-                chr += src[i+1];
-                toks.push_back(makeToken(TokenType::_CHR, line_number, chr));
+                std::string str;
+                uint64_t chr = uint64_t(src[i+1]);
+                str += std::to_string(chr);
+                toks.push_back(makeToken(TokenType::_CHR, line_number, str));
             }
             i+=3;
         }
