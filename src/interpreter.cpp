@@ -15,6 +15,7 @@ inline uint64_t pop(std::vector<uint64_t> &s) {
 }
 
 void dumpStack(const std::vector<uint64_t> &st) {
+    std::cout << "Dumping stack:\n";
     for (int i = st.size()-1; i >= 0; --i) {
         std::cout << "[" << i << "] " << st[i] << "\n";
     }
@@ -89,7 +90,6 @@ int interpret(const std::vector<Token> &tokens) {
                 std::cout << char(a);
             break;
             case TokenType::_DMP:
-                std::cout << "Dumping stack:\n";
                 dumpStack(st);
             break;
             case TokenType::_DUP:

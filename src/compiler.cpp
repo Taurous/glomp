@@ -48,11 +48,10 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
     writeline(out_file, "BITS 64\n");
     writeline(out_file, "segment .text\n");
     // `out` subroutine - prints uint64_t to stdout
-    writeline(out_file, "out:");
+    writeline(out_file, "glomp_printint:");
     writeline(out_file, "    sub     rsp, 40");
-    writeline(out_file, "    mov     ecx, 30");
+    writeline(out_file, "    mov     ecx, 31");
     writeline(out_file, "    mov     r9, -3689348814741910323");
-    writeline(out_file, "    mov     BYTE [rsp+31], 10");
     writeline(out_file, ".L2:");
     writeline(out_file, "    mov     rax, rdi");
     writeline(out_file, "    mov     r8, rcx");
@@ -79,7 +78,7 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
     writeline(out_file, "    ret");
     
     // printchar 
-    writeline(out_file, "\nprintchar:");
+    writeline(out_file, "\nglomp_printchar:");
     writeline(out_file, "    push    rdi");
     writeline(out_file, "    mov     rax, 1");
     writeline(out_file, "    mov     rdi, 1");
@@ -87,27 +86,42 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
     writeline(out_file, "    mov     rdx, 1");
     writeline(out_file, "    syscall");
     writeline(out_file, "    pop     rdi");
-    writeline(out_file, "    ret");
+    writeline(out_file, "    ret\n");
 
     // only generate dumpstack if it is called
-    auto is_dump = [](const Token& t) { return t.type == TokenType::_DMP; };
-    if (std::find_if(std::begin(tokens), std::end(tokens), is_dump) != tokens.end()) {
-        writeline(out_file, "\ndumpstack:");
-        writeline(out_file, "    mov     rcx, rbp");
-        writeline(out_file, "    sub     rcx, rsp");
-        writeline(out_file, "    mov     rdx, 8");
-        writeline(out_file, "dloop:");
-        writeline(out_file, "    mov     rdi, [rsp+rdx]");
-        writeline(out_file, "    push    rcx");
-        writeline(out_file, "    push    rdx");
-        writeline(out_file, "    call    out");
-        writeline(out_file, "    pop     rdx");
-        writeline(out_file, "    pop     rcx");
-        writeline(out_file, "    add     rdx, 8");
-        writeline(out_file, "    mov     rax, rcx");
-        writeline(out_file, "    sub     rax, rdx");
-        writeline(out_file, "    jnz     dloop");
-        writeline(out_file, "    ret");
+    bool dump_called = std::find_if(std::begin(tokens), std::end(tokens), [](const Token& t) { return t.type == TokenType::_DMP; }) != tokens.end();
+    if (dump_called) {
+writeline(out_file, R"(glomp_dumpstack:
+    mov     rax, 1
+    mov     rdi, 1
+    mov     rsi, glomp_dumpstr
+    mov     rdx, 15
+    syscall
+    mov     r12, rbp
+    sub     r12, rsp         ; get total stack size in bytes
+    sub     r12, 8           ; adjust for return address on stack
+    shr     r12, 3           ; shift right 3 to divide by 8 to get number of qwords on stack
+    mov     r13, 1          ; start at 1 so we skip the return address on stack
+glomp_dumpstackloop:
+    mov     rdi, '['
+    call    glomp_printchar
+    mov     rdi, r12
+    sub     rdi, r13
+    call    glomp_printint
+    mov     rdi, ']'
+    call    glomp_printchar
+    mov     rdi, ' '
+    call    glomp_printchar
+    mov     rdi, [rsp+r13*8]  ; Move value in stack into rdi
+    call    glomp_printint
+    mov     rdi, 10
+    call    glomp_printchar
+    inc     r13             ; dec counter
+    cmp     r13, r12
+    jg     glomp_dumpstackdone
+    jmp     glomp_dumpstackloop
+glomp_dumpstackdone:
+    ret)");
     }
 
     // entry point
@@ -170,14 +184,14 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
         break; 
         case TokenType::_OUT:
             writeline(out_file, "    pop    rdi");
-            writeline(out_file, "    call   out");
+            writeline(out_file, "    call   glomp_printint");
         break;
         case TokenType::_PUT:
             writeline(out_file, "    pop    rdi");
-            writeline(out_file, "    call   printchar");
+            writeline(out_file, "    call   glomp_printchar");
         break;
         case TokenType::_DMP:
-            writeline(out_file, "    call   dumpstack");
+            writeline(out_file, "    call   glomp_dumpstack");
         break;
         case TokenType::_DUP:
             writeline(out_file, "    pop    rax");
@@ -223,6 +237,10 @@ void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonl
         break;
         }
     }
+    
+    // data segment
+    writeline(out_file, "\nsegment .data");
+    writeline(out_file, "glomp_dumpstr:    db  \"Dumping stack:\",10");
 
     out_file.close();
 

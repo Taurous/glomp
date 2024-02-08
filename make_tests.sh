@@ -1,9 +1,11 @@
 #!/bin/bash
 
-RESULTSDIR="test/results/"
+SRCDIR="test/src/"
+RESULTDIR="test/results/"
 
-for file in ${RESULTSDIR}*.txt
+# Generate output from interpreted tests and compare to previous output
+for entry in $SRCDIR*
 do
-    name=$(b=${file##*/}; echo ${b%.*})
-    cp $file ${RESULTSDIR}${name}_test.txt
+    name=$(b=${entry##*/}; echo ${b%.*})
+    bash -c "./build/glomp -i $entry 2>&1 | tee ${RESULTDIR}${name}.txt &>/dev/null"
 done
