@@ -1,0 +1,3 @@
+1 2 3 rot dup out rot dup out rot out drop drop 10 put
+69 420 dup out ' ' put swap out drop
+3 4 10 put dump dup2 dump

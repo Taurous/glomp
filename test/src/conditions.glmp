@@ -1,0 +1,21 @@
+$ (expression) if (block) end
+
+2 2 >= if
+    10 'Q' put put
+end
+
+3 3 = if
+    10 'D' put put
+end
+
+1 2 ! if
+    10 'N' put put
+end
+
+4 4 <= if
+    10 20 + out 10 put
+    10 20 < if
+        10 'p' 'o' 'o' 'p' put put put put put
+    end
+end
+0

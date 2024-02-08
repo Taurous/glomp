@@ -1,0 +1,7 @@
+2 3 * out 10 put
+4 1 + out 10 put
+6 2 - out 10 put
+12 4 / out 10 put
+86 6 % out 10 put
+1 out 10 put
+0
