@@ -38,7 +38,7 @@ int call_nasm_ld(std::string out_path) {
 }
 
 void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonly) {  
-    assert((TokenType::_COUNT == 19) && "Exhaustive handling of tokens in compile()");
+    assert((TokenType::_COUNT == 27) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
@@ -143,7 +143,7 @@ glomp_dumpstackdone:
         switch (t.type) {
         case TokenType::_INT:
         case TokenType::_CHR:
-            writeline(out_file, "    push    " + t.value);
+            writeline(out_file, "    push    " + std::to_string(t.value));
         break;
         case TokenType::_STR:
             quit("_STR NYI");
@@ -172,11 +172,12 @@ glomp_dumpstackdone:
         case TokenType::_DIV:
             writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
-            writeline(out_file, "    mov    rdx, 0");
+            writeline(out_file, "    xor    rdx, rdx");
             writeline(out_file, "    div    rcx");
             writeline(out_file, "    push   rax");
         break; 
         case TokenType::_MOD:
+            writeline(out_file, "    xor    rdx, rdx");
             writeline(out_file, "    pop    rcx");
             writeline(out_file, "    pop    rax");
             writeline(out_file, "    div    rcx");
@@ -225,6 +226,30 @@ glomp_dumpstackdone:
             writeline(out_file, "    pop    rax");
             //writeline(out_file, "    mov    rax, 0");
             //writeline(out_file, "    add    rsp, 8");
+        break;
+        case TokenType::_IF:
+            assert(false && "_IF Not yet implemented...\n");
+        break;
+        case TokenType::_END:
+            assert(false && "_END Not yet implemented...\n");
+        break;
+        case TokenType::_GR:
+            assert(false && "_GR Not yet implemented...\n");
+        break;
+        case TokenType::_GE:
+            assert(false && "_GE Not yet implemented...\n");
+        break;
+        case TokenType::_EQ:
+            assert(false && "_EQ Not yet implemented...\n");
+        break;
+        case TokenType::_LE:
+            assert(false && "_LE Not yet implemented...\n");
+        break;
+        case TokenType::_LT:
+            assert(false && "_LT Not yet implemented...\n");
+        break;
+        case TokenType::_NT:
+            assert(false && "_NT Not yet implemented...\n");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");

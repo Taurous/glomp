@@ -14,60 +14,60 @@ inline uint64_t pop(std::vector<uint64_t> &s) {
     return a;
 }
 
-void dumpStack(const std::vector<uint64_t> &st) {
+void dumpStack(const std::vector<uint64_t> &data_stack) {
     std::cout << "Dumping stack:\n";
-    for (int i = st.size()-1; i >= 0; --i) {
-        std::cout << "[" << i << "] " << st[i] << "\n";
+    for (int i = data_stack.size()-1; i >= 0; --i) {
+        std::cout << "[" << i << "] " << data_stack[i] << "\n";
     }
 }
 
 int interpret(const std::vector<Token> &tokens) {
-    assert((TokenType::_COUNT == 19) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 27) && "Exhaustive handling of tokens in interpret()");
     
-    std::vector<uint64_t> st;       // Program Stack
-    size_t pc = 0;                  // Stack Pointer
-    uint64_t return_val = 0;
+    std::vector<uint64_t> data_stack;   // Program Stack
+    size_t pc = 0;
 
+    uint64_t return_val = 0;
     while (pc < tokens.size()) {
         const Token &token = tokens[pc++];
         uint64_t a, b, c;
         switch (token.type) {
             case TokenType::_INT:
-                st.push_back(std::stoull(token.value));
+                data_stack.push_back(token.value);
             break;
             case TokenType::_CHR:
-                st.push_back(std::stoull(token.value));
+                data_stack.push_back(token.value);
             break;
             case TokenType::_ADD:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(a + b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(a + b);
             break;
             case TokenType::_SUB:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(a - b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(a - b);
             break;
             case TokenType::_MUL:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(a * b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(a * b);
             break;
             case TokenType::_DIV:
-                b = pop(st);
-                a = pop(st);
-                if (b == 0) { std::cerr << "Divide by zero! Line number " << token.line_number << std::endl; exit(EXIT_FAILURE); }
-                st.push_back(a / b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                if (b == 0) { std::cerr << "Divide by zero! Location " << token.line << ":" << token.column << std::endl; exit(EXIT_FAILURE); }
+                data_stack.push_back(a / b);
             break;
             case TokenType::_MOD:
-                b = pop(st);
-                a = pop(st);
-                if (b == 0) st.push_back(a);
-                else st.push_back(a % b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                if (b == 0) data_stack.push_back(a);
+                else data_stack.push_back(a % b);
             break;
             /*case TokenType::_RET:
             // need to figure out how this works.
-                a = pop(st);
+                a = pop(data_stack);
                 std::cout << "Returned " << a << std::endl;
             break;*/
             case TokenType::_IDN:
@@ -77,54 +77,90 @@ int interpret(const std::vector<Token> &tokens) {
                 assert(false && "_STR Not yet implemented...\n");
             /*// put characters onto stack in reverse and then put size of string
                 for (int i = token.value.size() - 1; i >= 0; --i) {
-                    st.push_back(int(token.value[i]));
+                    data_stack.push_back(int(token.value[i]));
                 }
-                st.push_back(int(token.value.size()));
+                data_stack.push_back(int(token.value.size()));
             */break;
             case TokenType::_OUT:
-                a = pop(st);
+                a = pop(data_stack);
                 std::cout << a;
             break;
             case TokenType::_PUT:
-                a = pop(st);
+                a = pop(data_stack);
                 std::cout << char(a);
             break;
             case TokenType::_DMP:
-                dumpStack(st);
+                dumpStack(data_stack);
             break;
             case TokenType::_DUP:
                 // a b c -> a b c c
-                a = pop(st);
-                st.push_back(a);
-                st.push_back(a);
+                a = pop(data_stack);
+                data_stack.push_back(a);
+                data_stack.push_back(a);
             break;
             case TokenType::_DUP2:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(a);
-                st.push_back(b);
-                st.push_back(a);
-                st.push_back(b);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(a);
+                data_stack.push_back(b);
+                data_stack.push_back(a);
+                data_stack.push_back(b);
             break;
             case TokenType::_ROT:
-                c = pop(st);
-                b = pop(st);
-                a = pop(st);
-                st.push_back(b);
-                st.push_back(c);
-                st.push_back(a);
+                c = pop(data_stack);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(b);
+                data_stack.push_back(c);
+                data_stack.push_back(a);
             break;
             case TokenType::_SWP:
-                b = pop(st);
-                a = pop(st);
-                st.push_back(b);
-                st.push_back(a);
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(b);
+                data_stack.push_back(a);
             break;
             case TokenType::_DROP:
-                pop(st);
+                pop(data_stack);
+            break;
+            case TokenType::_IF:
+                assert(false && "_IF Not yet implemented...\n");
+            break;
+            case TokenType::_END:
+                assert(false && "_END Not yet implemented...\n");
+            break;
+            case TokenType::_GR:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a > b));
+            break;
+            case TokenType::_GE:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a >= b));
+            break;
+            case TokenType::_EQ:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a == b));
+            break;
+            case TokenType::_LE:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a <= b));
+            break;
+            case TokenType::_LT:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a < b));
+            break;
+            case TokenType::_NT:
+                b = pop(data_stack);
+                a = pop(data_stack);
+                data_stack.push_back(uint64_t(a != b));
             break;
             case TokenType::_EOF:
-                return_val = pop(st);
+                return_val = pop(data_stack);
             break;
             case TokenType::_INV:
             default:
