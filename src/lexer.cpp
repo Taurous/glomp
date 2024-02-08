@@ -101,11 +101,11 @@ std::vector<Token> tokenize(std::string src) {
         else if (src[i] == '/') toks.push_back(makeToken(TokenType::_DIV, line, column));
         else if (src[i] == '%') toks.push_back(makeToken(TokenType::_MOD, line, column));
         else if (src[i] == '>') {
-            if (i+1 < src.size() && src[i+1] == '=') toks.push_back(makeToken(TokenType::_GE, line, column));
+            if (i+1 < src.size() && src[i+1] == '=') { toks.push_back(makeToken(TokenType::_GE, line, column)); ++i; }
             else toks.push_back(makeToken(TokenType::_GR, line, column));
         }
         else if (src[i] == '<') {
-            if (i+1 < src.size() && src[i+1] == '=') toks.push_back(makeToken(TokenType::_LE, line, column));
+            if (i+1 < src.size() && src[i+1] == '=') { toks.push_back(makeToken(TokenType::_LE, line, column)); ++i; }
             else toks.push_back(makeToken(TokenType::_LT, line, column));
         }
         else if (src[i] == '=') toks.push_back(makeToken(TokenType::_EQ, line, column));

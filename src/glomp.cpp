@@ -43,6 +43,38 @@ bool validate(const std::vector<Token>& tokens) {
     return true;
 }
 
+void linkBlocks(std::vector<Token> &tokens) {
+    size_t pc = 0;
+    size_t if_pos = tokens.size();
+    int blockdepth = 0; // should be zero when done
+    while (pc < tokens.size()) {
+        Token &t = tokens[pc];
+
+        switch (t.type) {
+            case TokenType::_IF:
+                if_pos = pc;
+                ++blockdepth;
+            break;
+            case TokenType::_END:
+                if (if_pos > pc) {
+                    std::cerr << "`end` without matching `if`: " << t.line << ":" << t.column << "\n";
+                    exit(EXIT_FAILURE);
+                }
+                tokens[if_pos].value = uint64_t(pc);
+                --blockdepth;
+            break;
+            default:
+            break;
+        }
+        ++pc;
+    }
+    if (blockdepth) {
+    // TODO: Better error handling here
+        std::cerr << "incomplete if statements\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
 enum class Mode {
     ERROR,
     COMPILE,
@@ -103,6 +135,7 @@ int main(int argc, char **argv) {
     int return_val = 0;
     switch (mode) {
         case Mode::INTERPRET:
+            linkBlocks(tokens);
             return_val = interpret(tokens);
             break;
         case Mode::COMPILE:

@@ -124,10 +124,12 @@ int interpret(const std::vector<Token> &tokens) {
                 pop(data_stack);
             break;
             case TokenType::_IF:
-                assert(false && "_IF Not yet implemented...\n");
+                a = pop(data_stack);
+                if (a) continue;
+                else pc = size_t(token.value+1);
             break;
             case TokenType::_END:
-                assert(false && "_END Not yet implemented...\n");
+                continue;
             break;
             case TokenType::_GR:
                 b = pop(data_stack);
