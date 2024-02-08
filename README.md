@@ -4,10 +4,17 @@ This is a **work in progress** compiler/interpreter for *glomp*, a concatenative
 ## Building
 Run the following command in the glomp directory:
 ```
+<<<<<<< HEAD
 mkdir build/ && /
 cd build/ &&  /
 cmake .. && /
 cd .. && /
+=======
+mkdir build/ \
+cd build/ \
+cmake .. \
+cd .. \
+>>>>>>> 9c25e28935b833945dca391e5ece755f919f6990
 cmake --build build/
 ```
 
