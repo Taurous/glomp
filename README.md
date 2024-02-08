@@ -4,10 +4,10 @@ This is a **work in progress** compiler/interpreter for *glomp*, a concatenative
 ## Building
 Run the following command in the glomp directory:
 ```
-mkdir build/ && \
-cd build/ &&  \
-cmake .. && \
-cd .. && \
+mkdir build/ \
+cd build/ \
+cmake .. \
+cd .. \
 cmake --build build/
 ```
 
