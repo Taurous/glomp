@@ -45,30 +45,28 @@ bool validate(const std::vector<Token>& tokens) {
 
 void linkBlocks(std::vector<Token> &tokens) {
     size_t pc = 0;
-    size_t if_pos = tokens.size();
-    int blockdepth = 0; // should be zero when done
+    std::vector<size_t> ip_stack;
     while (pc < tokens.size()) {
         Token &t = tokens[pc];
 
         switch (t.type) {
             case TokenType::_IF:
-                if_pos = pc;
-                ++blockdepth;
+                ip_stack.push_back(pc); 
             break;
             case TokenType::_END:
-                if (if_pos > pc) {
+                if (ip_stack.empty()) {
                     std::cerr << "`end` without matching `if`: " << t.line << ":" << t.column << "\n";
                     exit(EXIT_FAILURE);
                 }
-                tokens[if_pos].value = uint64_t(pc);
-                --blockdepth;
+                tokens[ip_stack.back()].value = uint64_t(pc);
+                ip_stack.pop_back();
             break;
             default:
             break;
         }
         ++pc;
     }
-    if (blockdepth) {
+    if (!ip_stack.empty()) {
     // TODO: Better error handling here
         std::cerr << "incomplete if statements\n";
         exit(EXIT_FAILURE);
