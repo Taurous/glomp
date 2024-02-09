@@ -18,4 +18,11 @@ end
         10 'p' 'o' 'o' 'p' put put put put put
     end
 end
+
+10 24 > if
+    10 'q' 'q' put put put
+else
+    10 'p' 'p' put put put
+end
+
 0

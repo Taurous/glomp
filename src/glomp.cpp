@@ -48,17 +48,30 @@ void linkBlocks(std::vector<Token> &tokens) {
     std::vector<size_t> ip_stack;
     while (pc < tokens.size()) {
         Token &t = tokens[pc];
-
         switch (t.type) {
             case TokenType::_IF:
                 ip_stack.push_back(pc); 
             break;
-            case TokenType::_END:
+            case TokenType::_ELSE:
                 if (ip_stack.empty()) {
-                    std::cerr << "`end` without matching `if`: " << t.line << ":" << t.column << "\n";
+                    std::cerr << "`else` without matching `if`: " << t.line << ":" << t.column << "\n";
                     exit(EXIT_FAILURE);
                 }
-                tokens[ip_stack.back()].value = uint64_t(pc);
+                if (tokens[ip_stack.back()].type == TokenType::_IF) {
+                    tokens[ip_stack.back()].value = uint64_t(pc + 1);
+                    ip_stack.pop_back();
+                    ip_stack.push_back(pc);
+                } else {
+                    std::cerr << "`else` can only close `if` blocks: " << t.line << ":" << t.column << "\n";
+                    exit(EXIT_FAILURE);
+                }
+            break;
+            case TokenType::_END:
+                if (ip_stack.empty()) {
+                    std::cerr << "`end` without matching `if/else`: " << t.line << ":" << t.column << "\n";
+                    exit(EXIT_FAILURE);
+                }
+                tokens[ip_stack.back()].value = uint64_t(pc + 1);
                 ip_stack.pop_back();
             break;
             default:

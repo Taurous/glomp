@@ -28,6 +28,7 @@ enum TokenType {
     _DROP,  // remove item from stack
 
     _IF,    // if condition
+    _ELSE,  // else label
     _END,   // end of block
     _GR,    // greater than
     _GE,    // greater equal

@@ -46,6 +46,7 @@ Token makeToken(TokenType type, int line, int column, uint64_t value = 0) {
         case TokenType::_DUP: t.as_string = "DUP"; break;
         case TokenType::_DROP: t.as_string = "DROP"; break;
         case TokenType::_IF: t.as_string = "IF"; break;
+        case TokenType::_ELSE: t.as_string = "ELSE"; break;
         case TokenType::_END: t.as_string = "END"; break;
         case TokenType::_GR: t.as_string = "GR"; break;
         case TokenType::_GE: t.as_string = "GE"; break;
@@ -72,7 +73,7 @@ std::vector<Token> tokenize(std::string src) {
     int line = 0;
     int column = 0;
 
-    assert((TokenType::_COUNT == 27) && "Exhaustive handling of tokens in tokenize()");
+    assert((TokenType::_COUNT == 28) && "Exhaustive handling of tokens in tokenize()");
     for (size_t i = 0; i < src.size(); ++i) {
         // new line, increment line number
         if (src[i] == '\n') {
@@ -202,6 +203,7 @@ std::vector<Token> tokenize(std::string src) {
             else if (ident == "swap")   toks.push_back(makeToken(TokenType::_SWP,  line, column));
             else if (ident == "drop")   toks.push_back(makeToken(TokenType::_DROP, line, column));
             else if (ident == "if")     toks.push_back(makeToken(TokenType::_IF,   line, column));
+            else if (ident == "else")  toks.push_back(makeToken(TokenType::_ELSE, line, column));
             else if (ident == "end")    toks.push_back(makeToken(TokenType::_END,  line, column));
             else                        toks.push_back(makeToken(TokenType::_IDN,  line, column));
         }

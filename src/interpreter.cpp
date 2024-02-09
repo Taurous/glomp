@@ -22,7 +22,7 @@ void dumpStack(const std::vector<uint64_t> &data_stack) {
 }
 
 int interpret(const std::vector<Token> &tokens) {
-    assert((TokenType::_COUNT == 27) && "Exhaustive handling of tokens in interpret()");
+    assert((TokenType::_COUNT == 28) && "Exhaustive handling of tokens in interpret()");
     
     std::vector<uint64_t> data_stack;   // Program Stack
     size_t pc = 0;
@@ -126,7 +126,10 @@ int interpret(const std::vector<Token> &tokens) {
             case TokenType::_IF:
                 a = pop(data_stack);
                 if (a) continue;
-                else pc = size_t(token.value+1);
+                else pc = size_t(token.value);
+            break;
+            case TokenType::_ELSE:
+                pc = size_t(token.value);
             break;
             case TokenType::_END:
                 continue;
