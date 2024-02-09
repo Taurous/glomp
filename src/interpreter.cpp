@@ -126,10 +126,10 @@ int interpret(const std::vector<Token> &tokens) {
             case TokenType::_IF:
                 a = pop(data_stack);
                 if (a) continue;
-                else pc = size_t(token.value);
+                else pc = size_t(token.value + 1);
             break;
             case TokenType::_ELSE:
-                pc = size_t(token.value);
+                pc = size_t(token.value + 1);
             break;
             case TokenType::_END:
                 continue;

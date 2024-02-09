@@ -38,7 +38,7 @@ int call_nasm_ld(std::string out_path) {
 }
 
 void compile(const std::vector<Token> &tokens, std::string out_path, bool asmonly) {  
-    assert((TokenType::_COUNT == 27) && "Exhaustive handling of tokens in compile()");
+    assert((TokenType::_COUNT == 28) && "Exhaustive handling of tokens in compile()");
     std::ofstream out_file(out_path + ".asm", std::ofstream::trunc | std::ofstream::out);
 
     if (!out_file.is_open()) {
@@ -139,7 +139,9 @@ glomp_dumpstackdone:
         exit(EXIT_FAILURE);
     };
     
-    for (auto &t : tokens) {
+    for (size_t pc = 0; pc < tokens.size(); ++pc) {
+        const Token &t = tokens[pc];
+
         switch (t.type) {
         case TokenType::_INT:
         case TokenType::_CHR:
@@ -222,34 +224,68 @@ glomp_dumpstackdone:
             writeline(out_file, "    push   rcx");
         break;
         case TokenType::_DROP:
-            writeline(out_file, "; drop clobbers rax, consider this in the future");
-            writeline(out_file, "    pop    rax");
+            writeline(out_file, "; drop clobbers r13, consider this in the future");
+            writeline(out_file, "    pop    r13");
             //writeline(out_file, "    mov    rax, 0");
             //writeline(out_file, "    add    rsp, 8");
         break;
         case TokenType::_IF:
-            assert(false && "_IF Not yet implemented...\n");
+            writeline(out_file, ";; ~~~~~   if block ~~~~~ ;;");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, 0");
+            if (tokens[t.value].type == TokenType::_ELSE) writeline(out_file, "    je     glomp_else_" + std::to_string(uint64_t(t.value)));
+            else writeline(out_file, "    je     glomp_end_" + std::to_string(uint64_t(t.value)));
+        break;
+        case TokenType::_ELSE:
+            writeline(out_file, ";; ~~~~~ else block ~~~~~ ;;");
+            writeline(out_file, "    jmp     glomp_end_" + std::to_string(t.value));
+            writeline(out_file, "glomp_else_" + std::to_string(pc) + ":");
         break;
         case TokenType::_END:
-            assert(false && "_END Not yet implemented...\n");
+            writeline(out_file, ";; ~~~~~  end block ~~~~~ ;;");
+            writeline(out_file, "glomp_end_" + std::to_string(pc) + ":");
         break;
         case TokenType::_GR:
-            assert(false && "_GR Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    seta    al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_GE:
-            assert(false && "_GE Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    setae   al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_EQ:
-            assert(false && "_EQ Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    sete    al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_LE:
-            assert(false && "_LE Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    setbe   al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_LT:
-            assert(false && "_LT Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    setb    al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_NT:
-            assert(false && "_NT Not yet implemented...\n");
+            writeline(out_file, "    pop     rcx");
+            writeline(out_file, "    pop     rax");
+            writeline(out_file, "    cmp     rax, rcx");
+            writeline(out_file, "    setne   al");
+            writeline(out_file, "    push    rax");
         break;
         case TokenType::_EOF:
             writeline(out_file, "    mov    rax, 60");

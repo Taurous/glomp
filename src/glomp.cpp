@@ -50,6 +50,7 @@ void linkBlocks(std::vector<Token> &tokens) {
         Token &t = tokens[pc];
         switch (t.type) {
             case TokenType::_IF:
+//                std::cout << "found if at pc = " << pc << "\n";
                 ip_stack.push_back(pc); 
             break;
             case TokenType::_ELSE:
@@ -58,7 +59,7 @@ void linkBlocks(std::vector<Token> &tokens) {
                     exit(EXIT_FAILURE);
                 }
                 if (tokens[ip_stack.back()].type == TokenType::_IF) {
-                    tokens[ip_stack.back()].value = uint64_t(pc + 1);
+                    tokens[ip_stack.back()].value = uint64_t(pc);
                     ip_stack.pop_back();
                     ip_stack.push_back(pc);
                 } else {
@@ -71,7 +72,8 @@ void linkBlocks(std::vector<Token> &tokens) {
                     std::cerr << "`end` without matching `if/else`: " << t.line << ":" << t.column << "\n";
                     exit(EXIT_FAILURE);
                 }
-                tokens[ip_stack.back()].value = uint64_t(pc + 1);
+  //              std::cout << "found end at pc = " << pc << " setting if at pc = " << ip_stack.back() << " to " << (pc + 1) << "\n";
+                tokens[ip_stack.back()].value = uint64_t(pc);
                 ip_stack.pop_back();
             break;
             default:
@@ -143,10 +145,11 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     
+    linkBlocks(tokens);
+    
     int return_val = 0;
     switch (mode) {
         case Mode::INTERPRET:
-            linkBlocks(tokens);
             return_val = interpret(tokens);
             break;
         case Mode::COMPILE:

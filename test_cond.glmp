@@ -1,0 +1,6 @@
+1 2 > if
+    10 'y' put put
+else
+    10 'n' put put
+end
+0
